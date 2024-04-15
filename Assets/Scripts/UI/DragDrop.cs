@@ -3,10 +3,17 @@ using UnityEngine.EventSystems;
 
 public class DragDrop : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IEndDragHandler, IDragHandler
 {
+  [Header("Injected dependencies")]
+  [Range(0, 100)]
+  [SerializeField] private float gravityForce;
   [SerializeField] private Canvas canvas;
-  private CanvasGroup canvasGroup;
 
+  [Header("Components")]
+  private CanvasGroup canvasGroup;
   private RectTransform rectTransform;
+  [Header("Settings")]
+  private bool isOnDrag = false;
+
   private void Start()
   {
     rectTransform = GetComponent<RectTransform>();
@@ -15,30 +22,31 @@ public class DragDrop : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, I
 
   private void Update()
   {
-
+    if (isOnDrag) return;
+    rectTransform.anchoredPosition += gravityForce * 100 * Time.deltaTime * Vector2.down;
   }
 
   public void OnPointerDown(PointerEventData eventData)
   {
-    // Debug.Log("OnPointerDown");
+
   }
 
   public void OnBeginDrag(PointerEventData eventData)
   {
-    // Debug.Log("OnBeginDrag");
     canvasGroup.alpha = .6f;
     canvasGroup.blocksRaycasts = false;
   }
 
   public void OnEndDrag(PointerEventData eventData)
   {
-    // Debug.Log("OnEndDrag");
+    isOnDrag = false;
     canvasGroup.alpha = 1;
     canvasGroup.blocksRaycasts = true;
   }
 
   public void OnDrag(PointerEventData eventData)
   {
+    isOnDrag = true;
     rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
   }
 }
