@@ -30,6 +30,8 @@ public class GridWorld : MonoBehaviour
 
     public bool IsGridPosBlockedAt(Vector2 gridPos)
     {
+        if (gridPos.x >= grid.GetLength(0) || gridPos.x < 0) return true;
+        if (gridPos.y >= grid.GetLength(1) || gridPos.y < 0) return true;
         if (grid[(int)gridPos.x, (int)gridPos.y] > 0)
         {
             return true;
@@ -39,7 +41,7 @@ public class GridWorld : MonoBehaviour
 
     public void SetWorldPosBlockedAt(Vector2 worldPos, int value = 1)
     {
-        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, GridWorld.Instance.offset);
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, offset);
         SetGridPosBlockedAt(gridPos, value);
     }
 
@@ -52,19 +54,26 @@ public class GridWorld : MonoBehaviour
     public Vector2 FindFlooredWorldPosAt(Vector2 worldPos)
     {
         Vector2 flooredGridPos = FindFlooredGridPosAt(worldPos);
+        if (flooredGridPos.x < 0) return new Vector2(-1, -1);
+
         Vector2 flooredWorldPos = GridUtility.ConvertGridPosToWorldPos(flooredGridPos, offset);
         return flooredWorldPos;
     }
 
     public Vector2 FindFlooredGridPosAt(Vector2 gridPos)
     {
+        if (IsGridPosBlockedAt(gridPos)) return new Vector2(-1, -1);
+
         int flooredY = 0;
         int roudedX = Mathf.RoundToInt(gridPos.x);
         while (grid[roudedX, flooredY] > 0)
         {
             flooredY++;
         }
-        return new Vector2(roudedX, flooredY);
+        var flooredGridPos = new Vector2(roudedX, flooredY);
+
+        if (IsGridPosBlockedAt(flooredGridPos)) return new Vector2(-1, -1);
+        return flooredGridPos;
     }
 
     void BakingGridWorld()

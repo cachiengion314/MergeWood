@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 [RequireComponent(typeof(Collider2D))]
 public class DragAndDrop : MonoBehaviour
@@ -10,6 +11,9 @@ public class DragAndDrop : MonoBehaviour
     [Header("Components")]
     private Collider2D _collider;
     public bool IsOnDrag { get; private set; }
+
+    [Header("Events")]
+    public Action<Vector2> onMovedToTarget;
 
     [Header("Settings")]
     private float deltaX, deltaY;
@@ -23,7 +27,6 @@ public class DragAndDrop : MonoBehaviour
     void Start()
     {
         _collider = GetComponent<Collider2D>();
-        targetPosition = new Vector3(0, 3, 0);
     }
 
     void Update()
@@ -45,6 +48,7 @@ public class DragAndDrop : MonoBehaviour
             isMoveToTarget = true;
             LeanTween.move(gameObject, targetPosition, .02f);
 
+            onMovedToTarget?.Invoke(targetPosition);
             GridWorld.Instance.SetWorldPosBlockedAt(targetPosition, 1);
             return;
         }
@@ -101,6 +105,9 @@ public class DragAndDrop : MonoBehaviour
         targetPosition = new Vector3(flooredWorldPos.x, flooredWorldPos.y);
     }
 
+    /// <summary>
+    /// only for debug
+    /// </summary>
     void DrawGrabedBlock()
     {
         if (IsOnDrag)
