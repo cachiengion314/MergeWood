@@ -18,29 +18,34 @@ public class DragAndDrop : MonoBehaviour
     [Range(0, 100)]
     [SerializeField] private float moveSpeed;
     private Vector3 nextMovePos;
-    private bool shouldMove = true;
+    private bool isMoveToTarget = true;
 
     void Start()
     {
         _collider = GetComponent<Collider2D>();
-        targetPosition = new Vector3(0, -3, 0);
+        targetPosition = new Vector3(0, 3, 0);
     }
 
     void Update()
     {
         DragDropControl();
         MoveToTarget();
+        CalculateTargetPosition();
+
+        DrawGrabedBlock();
     }
 
     void MoveToTarget()
     {
         if (IsOnDrag) return;
-        if (!shouldMove) return;
+        if (isMoveToTarget) return;
         Vector3 distanceDir = targetPosition - transform.position;
         if (distanceDir.sqrMagnitude < snapToTargetValue)
         {
-            shouldMove = false;
-            LeanTween.move(gameObject, targetPosition, .05f);
+            isMoveToTarget = true;
+            LeanTween.move(gameObject, targetPosition, .02f);
+
+            GridWorld.Instance.SetWorldPosBlockedAt(targetPosition, 1);
             return;
         }
 
@@ -60,8 +65,8 @@ public class DragAndDrop : MonoBehaviour
             {
                 case TouchPhase.Began:
                     IsOnDrag = true;
-                    shouldMove = true;
-                    
+                    isMoveToTarget = false;
+
                     if (_collider == Physics2D.OverlapPoint(touchPos))
                     {
                         deltaX = touchPos.x - transform.position.x;
@@ -85,6 +90,24 @@ public class DragAndDrop : MonoBehaviour
                     }
                     break;
             }
+        }
+    }
+
+    void CalculateTargetPosition()
+    {
+        if (!IsOnDrag) return;
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.offset);
+        Vector2 flooredWorldPos = GridWorld.Instance.FindFlooredWorldPosAt(gridPos);
+        targetPosition = new Vector3(flooredWorldPos.x, flooredWorldPos.y);
+    }
+
+    void DrawGrabedBlock()
+    {
+        if (IsOnDrag)
+        {
+            Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.offset);
+            Vector2 worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.offset);
+            Utility.DrawQuad(worldPos, .5f, 2);
         }
     }
 }

@@ -85,7 +85,7 @@ public class Utility
     /// <param name="width"></param>
     /// <param name="_color"></param>
     /// <param name="_height"></param>
-    public static void DrawQuad(in float2 quadPos, in float width, in int _color = 0, in float _height = .1f)
+    public static void DrawQuad(in Vector2 quadPos, in float width, in int _color = 0, in float _height = .1f)
     {
         var color = Color.white;
         if (_color == 1)
@@ -103,11 +103,11 @@ public class Utility
 
         var Width = width / 2;
 
-        var offset = new float3(quadPos.x, _height, quadPos.y);
-        var pos1 = offset + new float3(-Width, _height, -Width);
-        var pos2 = offset + new float3(-Width, _height, Width);
-        var pos3 = offset + new float3(Width, _height, Width);
-        var pos4 = offset + new float3(Width, _height, -Width);
+        var offset = new float3(quadPos.x, quadPos.y, _height);
+        var pos1 = offset + new float3(-Width, -Width, _height);
+        var pos2 = offset + new float3(-Width, Width, _height);
+        var pos3 = offset + new float3(Width, Width, _height);
+        var pos4 = offset + new float3(Width, -Width, _height);
 
         Debug.DrawLine(pos1, pos2, color);
         Debug.DrawLine(pos2, pos3, color);
