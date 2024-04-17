@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GridWorld : MonoBehaviour
@@ -6,6 +7,7 @@ public class GridWorld : MonoBehaviour
     [SerializeField] Vector2Int gridSize;
     public int[,] Grid { get; private set; }
     public Vector2 Offset { get; private set; }
+    readonly Vector2[] directions = { Vector2.down, Vector2.left, Vector2.up, Vector2.right };
 
     private void Awake()
     {
@@ -36,6 +38,13 @@ public class GridWorld : MonoBehaviour
     {
         Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
         return IsGridPosBlockedAt(gridPos);
+    }
+
+    public bool IsGridPosOutsideAt(Vector2 gridPos)
+    {
+        if (gridPos.x >= Grid.GetLength(0) || gridPos.x < 0) return true;
+        if (gridPos.y >= Grid.GetLength(1) || gridPos.y < 0) return true;
+        return false;
     }
 
     public bool IsGridPosBlockedAt(Vector2 gridPos)
@@ -72,18 +81,24 @@ public class GridWorld : MonoBehaviour
         Gizmos.DrawCube(transform.position, new Vector2(gridSize.x, gridSize.y));
     }
 
-    /// <summary>
-    /// Helpers function section
-    /// </summary>
+    public int GetWorldPosValueAt(Vector2 worldPos)
+    {
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
+        return Grid[(int)gridPos.x, (int)gridPos.y];
+    }
+
     public void SetWorldPosValueAt(Vector2 worldPos, int value = 1)
     {
         Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
         SetGridPosValueAt(gridPos, value);
     }
 
+    /// <summary>
+    /// Helpers function section
+    /// </summary>
     public void SetGridPosValueAt(Vector2 gridPos, int value = 1)
     {
-        if (IsGridPosBlockedAt(gridPos) && value > 0) return;
+        if (IsGridPosOutsideAt(gridPos)) return;
         Grid[(int)gridPos.x, (int)gridPos.y] = value;
     }
 
@@ -110,5 +125,37 @@ public class GridWorld : MonoBehaviour
 
         if (IsGridPosBlockedAt(flooredGridPos)) return new Vector2(-1, -1);
         return flooredGridPos;
+    }
+
+    public List<Vector2> FindNeighborBlockWorldPosAt(Vector2 worldPos)
+    {
+        List<Vector2> blockWorldPoses = new();
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
+        var blockGridPoses = FindNeighborBlockGridPosAt(gridPos);
+        foreach (var gPos in blockGridPoses)
+        {
+            blockWorldPoses.Add(
+                GridUtility.ConvertGridPosToWorldPos(gPos, Offset)
+            );
+        }
+        return blockWorldPoses;
+    }
+
+    public List<Vector2> FindNeighborBlockGridPosAt(Vector2 gridPos)
+    {
+        List<Vector2> blockGridPoses = new();
+        if (IsGridPosOutsideAt(gridPos)) return blockGridPoses;
+
+        for (int i = 0; i < directions.Length; ++i)
+        {
+            Vector2 nextGridPos = gridPos + directions[i];
+            if (IsGridPosOutsideAt(nextGridPos)) continue;
+
+            if (Grid[(int)nextGridPos.x, (int)nextGridPos.y] > 0)
+            {
+                blockGridPoses.Add(nextGridPos);
+            }
+        }
+        return blockGridPoses;
     }
 }

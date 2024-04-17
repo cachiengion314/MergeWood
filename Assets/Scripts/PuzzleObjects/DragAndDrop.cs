@@ -74,6 +74,7 @@ public class DragAndDrop : MonoBehaviour
                         onDragBegan?.Invoke();
                         IsOnDrag = true;
                         isMoveToTarget = false;
+                        SpawnPuzzleBlocks.Instance.CurrentBeingDragged = this;
 
                         deltaX = touchPos.x - transform.position.x;
                         deltaY = touchPos.y - transform.position.y;
@@ -88,9 +89,12 @@ public class DragAndDrop : MonoBehaviour
                     break;
 
                 case TouchPhase.Ended:
-                    onDragEnd?.Invoke();
-                    IsOnDrag = false;
-
+                    if (this == SpawnPuzzleBlocks.Instance.CurrentBeingDragged)
+                    {
+                        onDragEnd?.Invoke();
+                        IsOnDrag = false;
+                        SpawnPuzzleBlocks.Instance.CurrentBeingDragged = null;
+                    }
                     break;
             }
         }

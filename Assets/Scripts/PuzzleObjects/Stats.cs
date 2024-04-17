@@ -1,10 +1,21 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.Pool;
 
 public class Stats : MonoBehaviour
 {
-    [Header("Injected dependencies")]
-    public int PuzzleValue;
+    [Header("Injected Dependencies")]
+    public ObjectPool<GameObject> puzzleBlockPool;
+    private int puzzleValue;
+    public int PuzzleValue
+    {
+        get { return puzzleValue; }
+        set
+        {
+            valueText.text = value.ToString();
+            puzzleValue = value;
+        }
+    }
     [SerializeField] TextMeshPro valueText;
     [SerializeField] DragAndDrop dragAndDrop;
 
@@ -16,7 +27,7 @@ public class Stats : MonoBehaviour
         dragAndDrop.onMovedToTarget += DragAndDrop_OnMovedToTarget;
         dragAndDrop.onDragBegan += DragAndDrop_OnDragBegan;
 
-        valueText.text = PuzzleValue.ToString();
+        valueText.text = puzzleValue.ToString();
     }
 
     private void OnDestroy()
@@ -32,7 +43,27 @@ public class Stats : MonoBehaviour
 
     private void DragAndDrop_OnMovedToTarget(Vector2 targetPosition)
     {
-        GridWorld.Instance.SetWorldPosValueAt(targetPosition, PuzzleValue);
+        GridWorld.Instance.SetWorldPosValueAt(targetPosition, puzzleValue);
         LastLandingPos = targetPosition;
+
+        CheckRuleAt(targetPosition);
+    }
+
+    public void AutoPoolRelease()
+    {
+        if (gameObject.activeSelf) puzzleBlockPool.Release(gameObject);
+    }
+
+    void CheckRuleAt(Vector2 targetPosition)
+    {
+        var neighbors = GridWorld.Instance.FindNeighborBlockWorldPosAt(targetPosition);
+        foreach (var neighbor in neighbors)
+        {
+            if (!MatchingRule.IsPassedDownBlock(targetPosition, neighbor)) continue;
+            if (GridWorld.Instance.GetWorldPosValueAt(neighbor) != puzzleValue) continue;
+
+            GridWorld.Instance.SetWorldPosValueAt(targetPosition, 0);
+            AutoPoolRelease();
+        }
     }
 }

@@ -1,14 +1,15 @@
 using UnityEngine;
+using UnityEngine.Pool;
 
 public class SpawnPuzzleBlocks : MonoBehaviour
 {
     public static SpawnPuzzleBlocks Instance { get; private set; }
 
-    [Header("Injected dependencies")]
+    [Header("Injected Dependencies")]
+    public int StartPuzzleBlockNumber;
     [SerializeField] GameObject puzzleBlock;
-
-    public GameObject[] PuzzleBlocks { get; private set; }
     public DragAndDrop CurrentBeingDragged;
+    private ObjectPool<GameObject> puzzleBlockPool;
 
     private void Awake()
     {
@@ -17,28 +18,57 @@ public class SpawnPuzzleBlocks : MonoBehaviour
 
     private void Start()
     {
+        puzzleBlockPool = new ObjectPool<GameObject>(
+            CreateBlockPoolObj,
+            OnTakeObjFromPool,
+            OnReturnObjFromPool,
+            OnDestroyPoolObj,
+            true, 20, 50
+        );
+
         SpawnBlocks();
+    }
+
+    private GameObject CreateBlockPoolObj()
+    {
+        GameObject _obj = Instantiate(puzzleBlock, transform.position, transform.rotation);
+        _obj.GetComponent<Stats>().puzzleBlockPool = puzzleBlockPool;
+        return _obj;
+    }
+
+    private void OnTakeObjFromPool(GameObject obj)
+    {
+        obj.gameObject.SetActive(true);
+    }
+
+    private void OnReturnObjFromPool(GameObject obj)
+    {
+        obj.gameObject.SetActive(false);
+    }
+
+    private void OnDestroyPoolObj(GameObject obj)
+    {
+        Destroy(obj.gameObject);
     }
 
     void SpawnBlocks()
     {
-        PuzzleBlocks = new GameObject[20];
-
-        int index = 0;
-        for (int x = 0; x < GridWorld.Instance.Grid.GetLength(0); x++)
+        for (int i = 0; i < StartPuzzleBlockNumber; i++)
         {
-            Vector2 highGridPos = new Vector2(x, GridWorld.Instance.Grid.GetLength(1) - 1);
+            int x = i % GridWorld.Instance.Grid.GetLength(0);
+            Vector2 highGridPos = new(x, GridWorld.Instance.Grid.GetLength(1) - 1);
             Vector2 flooredGridPos = GridWorld.Instance.FindFlooredGridPosAt(highGridPos);
             if (flooredGridPos.x < 0) continue;
-            GridWorld.Instance.SetGridPosValueAt(flooredGridPos, 1);
+
+            int _puzzleValue = Random.Range(1, 5);
+            var puzzleBlockClone = puzzleBlockPool.Get();
 
             Vector2 flooredWorldPos = GridUtility.ConvertGridPosToWorldPos(flooredGridPos, GridWorld.Instance.Offset);
-            GameObject puzzleBlockClone = Instantiate(puzzleBlock, flooredWorldPos, Quaternion.identity);
-            puzzleBlockClone.GetComponent<Stats>().PuzzleValue = 1;
+            puzzleBlockClone.transform.position = flooredWorldPos;
+            puzzleBlockClone.GetComponent<Stats>().PuzzleValue = _puzzleValue;
             puzzleBlockClone.GetComponent<Stats>().LastLandingPos = flooredWorldPos;
-            PuzzleBlocks[index] = puzzleBlockClone;
 
-            index++;
+            GridWorld.Instance.SetGridPosValueAt(flooredGridPos, _puzzleValue);
         }
     }
 }
