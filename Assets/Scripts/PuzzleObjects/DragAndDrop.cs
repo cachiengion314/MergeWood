@@ -14,6 +14,8 @@ public class DragAndDrop : MonoBehaviour
 
     [Header("Events")]
     public Action<Vector2> onMovedToTarget;
+    public Action onDragBegan;
+    public Action onDragEnd;
 
     [Header("Settings")]
     private float deltaX, deltaY;
@@ -46,10 +48,9 @@ public class DragAndDrop : MonoBehaviour
         if (distanceDir.sqrMagnitude < snapToTargetValue)
         {
             isMoveToTarget = true;
-            LeanTween.move(gameObject, targetPosition, .02f);
+            LeanTween.move(gameObject, targetPosition, .01f);
 
             onMovedToTarget?.Invoke(targetPosition);
-            GridWorld.Instance.SetWorldPosBlockedAt(targetPosition, 1);
             return;
         }
 
@@ -68,11 +69,12 @@ public class DragAndDrop : MonoBehaviour
             switch (touch.phase)
             {
                 case TouchPhase.Began:
-                    IsOnDrag = true;
-                    isMoveToTarget = false;
-
                     if (_collider == Physics2D.OverlapPoint(touchPos))
                     {
+                        onDragBegan?.Invoke();
+                        IsOnDrag = true;
+                        isMoveToTarget = false;
+
                         deltaX = touchPos.x - transform.position.x;
                         deltaY = touchPos.y - transform.position.y;
                     }
@@ -86,12 +88,9 @@ public class DragAndDrop : MonoBehaviour
                     break;
 
                 case TouchPhase.Ended:
+                    onDragEnd?.Invoke();
                     IsOnDrag = false;
-                    if (Mathf.Abs(transform.position.x - targetPosition.x) <= 1f &&
-                        Mathf.Abs(transform.position.y - targetPosition.y) <= 1f)
-                    {
 
-                    }
                     break;
             }
         }
@@ -100,7 +99,7 @@ public class DragAndDrop : MonoBehaviour
     void CalculateTargetPosition()
     {
         if (!IsOnDrag) return;
-        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.offset);
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.Offset);
         Vector2 flooredWorldPos = GridWorld.Instance.FindFlooredWorldPosAt(gridPos);
         targetPosition = new Vector3(flooredWorldPos.x, flooredWorldPos.y);
     }
@@ -110,11 +109,10 @@ public class DragAndDrop : MonoBehaviour
     /// </summary>
     void DrawGrabedBlock()
     {
-        if (IsOnDrag)
-        {
-            Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.offset);
-            Vector2 worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.offset);
-            Utility.DrawQuad(worldPos, .5f, 2);
-        }
+        if (!IsOnDrag) return;
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.Offset);
+        Vector2 worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.Offset);
+        Utility.DrawQuad(worldPos, .5f, 2);
+
     }
 }
