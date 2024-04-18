@@ -84,6 +84,7 @@ public class GridWorld : MonoBehaviour
     public int GetWorldPosValueAt(Vector2 worldPos)
     {
         Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
+        if (IsGridPosOutsideAt(gridPos)) return 0;
         return Grid[(int)gridPos.x, (int)gridPos.y];
     }
 

@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Pool;
 
-public class Stats : MonoBehaviour
+public class PuzzleStats : MonoBehaviour
 {
     [Header("Injected Dependencies")]
     public ObjectPool<GameObject> puzzleBlockPool;
@@ -43,13 +43,16 @@ public class Stats : MonoBehaviour
 
     private void DragAndDrop_OnMovedToTarget(Vector2 targetPosition)
     {
-        GridWorld.Instance.SetWorldPosValueAt(targetPosition, puzzleValue);
-        LastLandingPos = targetPosition;
-
+        SyncMovePuzzleBlockTo(targetPosition, LastLandingPos);
         CheckRuleAt(targetPosition);
+
+        LastLandingPos = targetPosition;
     }
 
-    public void AutoPoolRelease()
+    /// <summary>
+    /// Like Destroy functioon
+    /// </summary>
+    public void PoolDestroy()
     {
         if (gameObject.activeSelf) puzzleBlockPool.Release(gameObject);
     }
@@ -62,8 +65,36 @@ public class Stats : MonoBehaviour
             if (!MatchingRule.IsPassedDownBlock(targetPosition, neighbor)) continue;
             if (GridWorld.Instance.GetWorldPosValueAt(neighbor) != puzzleValue) continue;
 
-            GridWorld.Instance.SetWorldPosValueAt(targetPosition, 0);
-            AutoPoolRelease();
+            SyncValuePuzzleBlockAt(targetPosition, 0);
+            SyncValuePuzzleBlockAt(neighbor, GridWorld.Instance.GetWorldPosValueAt(neighbor) + 1);
         }
+    }
+
+    /// <summary>
+    /// Sync value between GridWorld.Grid and SpawnPuzzleBlocks.ActivePuzzleBlocks
+    /// </summary>
+    /// <param name="worldPos"></param>
+    void SyncValuePuzzleBlockAt(Vector2 worldPos, int value)
+    {
+        GridWorld.Instance.SetWorldPosValueAt(worldPos, value);
+        var currPuzzleBlock = SpawnPuzzleBlocks.Instance.FindPuzzleBlockAt(worldPos);
+        if (currPuzzleBlock == null) return;
+
+        currPuzzleBlock.GetComponent<PuzzleStats>().PuzzleValue = value;
+        if (value == 0)
+        {
+            SpawnPuzzleBlocks.Instance.RemovePuzzleBlockAt(worldPos); // remove its gameobj in spawn
+        }
+    }
+
+    /// <summary>
+    /// Sync position value between GridWorld.Grid and SpawnPuzzleBlocks.ActivePuzzleBlocks
+    /// </summary>
+    /// <param name="desWorldPos"></param>
+    /// <param name="lastWorldPos"></param>
+    void SyncMovePuzzleBlockTo(Vector2 desWorldPos, Vector2 lastWorldPos)
+    {
+        GridWorld.Instance.SetWorldPosValueAt(desWorldPos, puzzleValue);
+        SpawnPuzzleBlocks.Instance.MovePuzzleBlockTo(desWorldPos, lastWorldPos);
     }
 }
