@@ -12,6 +12,9 @@ public class SpawnPuzzleBlocks : MonoBehaviour
     public GameObject[,] ActivePuzzleBlocks;
     private ObjectPool<GameObject> puzzleBlockPool;
 
+    // [Header("Settings")]
+    public int TotalPuzzleBlockAmount { get; private set; }
+
     private void Awake()
     {
         Instance = this;
@@ -19,12 +22,14 @@ public class SpawnPuzzleBlocks : MonoBehaviour
 
     private void Start()
     {
+        TotalPuzzleBlockAmount = GridWorld.Instance.Grid.GetLength(0) * GridWorld.Instance.Grid.GetLength(1);
+
         puzzleBlockPool = new ObjectPool<GameObject>(
             CreateBlockPoolObj,
             OnTakeObjFromPool,
             OnReturnObjFromPool,
             OnDestroyPoolObj,
-            true, 20, 50
+            true, TotalPuzzleBlockAmount, TotalPuzzleBlockAmount
         );
 
         SpawnBlocks();
@@ -39,17 +44,17 @@ public class SpawnPuzzleBlocks : MonoBehaviour
 
     private void OnTakeObjFromPool(GameObject obj)
     {
-        obj.gameObject.SetActive(true);
+        obj.SetActive(true);
     }
 
     private void OnReturnObjFromPool(GameObject obj)
     {
-        obj.gameObject.SetActive(false);
+        obj.SetActive(false);
     }
 
     private void OnDestroyPoolObj(GameObject obj)
     {
-        Destroy(obj.gameObject);
+        Destroy(obj);
     }
 
     void SpawnBlocks()

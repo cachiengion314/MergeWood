@@ -6,6 +6,11 @@ public class PuzzleStats : MonoBehaviour
 {
     [Header("Injected Dependencies")]
     public ObjectPool<GameObject> puzzleBlockPool;
+    [SerializeField] TextMeshPro valueText;
+    [SerializeField] DragAndDrop dragAndDrop;
+
+    [Header("Settings")]
+    public Vector2 LastLandingPos;
     private int puzzleValue;
     public int PuzzleValue
     {
@@ -16,32 +21,27 @@ public class PuzzleStats : MonoBehaviour
             puzzleValue = value;
         }
     }
-    [SerializeField] TextMeshPro valueText;
-    [SerializeField] DragAndDrop dragAndDrop;
-
-    [Header("Settings")]
-    public Vector2 LastLandingPos;
 
     private void Start()
     {
-        dragAndDrop.onMovedToTarget += DragAndDrop_OnMovedToTarget;
-        dragAndDrop.onDragBegan += DragAndDrop_OnDragBegan;
+        dragAndDrop.onDroppedToFloor += DragAndDrop_onDroppedToFloor;
+        dragAndDrop.onDragBegan += DragAndDrop_onDragBegan;
 
         valueText.text = puzzleValue.ToString();
     }
 
     private void OnDestroy()
     {
-        dragAndDrop.onMovedToTarget -= DragAndDrop_OnMovedToTarget;
-        dragAndDrop.onDragBegan -= DragAndDrop_OnDragBegan;
+        dragAndDrop.onDroppedToFloor -= DragAndDrop_onDroppedToFloor;
+        dragAndDrop.onDragBegan -= DragAndDrop_onDragBegan;
     }
 
-    private void DragAndDrop_OnDragBegan()
+    private void DragAndDrop_onDragBegan()
     {
         GridWorld.Instance.SetWorldPosValueAt(LastLandingPos, 0);
     }
 
-    private void DragAndDrop_OnMovedToTarget(Vector2 targetPosition)
+    private void DragAndDrop_onDroppedToFloor(Vector2 targetPosition)
     {
         SyncMovePuzzleBlockTo(targetPosition, LastLandingPos);
         CheckRuleAt(targetPosition);
@@ -64,9 +64,13 @@ public class PuzzleStats : MonoBehaviour
         {
             if (!MatchingRule.IsPassedDownBlock(targetPosition, neighbor)) continue;
             if (GridWorld.Instance.GetWorldPosValueAt(neighbor) != puzzleValue) continue;
-
-            SyncValuePuzzleBlockAt(targetPosition, 0);
-            SyncValuePuzzleBlockAt(neighbor, GridWorld.Instance.GetWorldPosValueAt(neighbor) + 1);
+            // Passed matching rule
+            LeanTween.move(gameObject, neighbor, .07f).setOnComplete(() =>
+            {
+                SyncValuePuzzleBlockAt(targetPosition, 0);
+                SyncValuePuzzleBlockAt(neighbor, GridWorld.Instance.GetWorldPosValueAt(neighbor) + 1);
+            });
+            return;
         }
     }
 

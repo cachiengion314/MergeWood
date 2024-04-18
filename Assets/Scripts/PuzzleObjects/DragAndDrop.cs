@@ -6,25 +6,21 @@ public class DragAndDrop : MonoBehaviour
 {
     [Header("Injected Dependencies")]
     public Vector3 targetPosition;
-    public float snapToTargetValue;
 
     [Header("Components")]
     private Collider2D _collider;
     public bool IsOnDrag { get; private set; }
 
     [Header("Events")]
-    public Action<Vector2> onMovedToTarget;
+    public Action<Vector2> onDroppedToFloor;
     public Action onDragBegan;
     public Action onDragEnd;
 
     [Header("Settings")]
     private float deltaX, deltaY;
-    public bool locked;
     private Vector3 dir;
     [Range(0, 100)]
     [SerializeField] private float moveSpeed;
-    private Vector3 nextMovePos;
-    private bool isMoveToTarget = true;
 
     void Start()
     {
@@ -34,34 +30,13 @@ public class DragAndDrop : MonoBehaviour
     void Update()
     {
         DragDropControl();
-        MoveToTarget();
-        CalculateTargetPosition();
 
         DrawGrabedBlock();
     }
 
-    void MoveToTarget()
-    {
-        if (IsOnDrag) return;
-        if (isMoveToTarget) return;
-        Vector3 distanceDir = targetPosition - transform.position;
-        if (distanceDir.sqrMagnitude < snapToTargetValue)
-        {
-            isMoveToTarget = true;
-            LeanTween.move(gameObject, targetPosition, .01f);
-
-            onMovedToTarget?.Invoke(targetPosition);
-            return;
-        }
-
-        dir = new Vector3(distanceDir.normalized.x, distanceDir.normalized.y, 0);
-        nextMovePos = transform.position + (moveSpeed * Time.deltaTime * dir);
-        transform.position = nextMovePos;
-    }
-
     void DragDropControl()
     {
-        if (Input.touchCount > 0 && !locked)
+        if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
             Vector2 touchPos = Camera.main.ScreenToWorldPoint(touch.position);
@@ -73,7 +48,6 @@ public class DragAndDrop : MonoBehaviour
                     {
                         onDragBegan?.Invoke();
                         IsOnDrag = true;
-                        isMoveToTarget = false;
                         SpawnPuzzleBlocks.Instance.CurrentBeingDragged = this;
 
                         deltaX = touchPos.x - transform.position.x;
@@ -84,7 +58,9 @@ public class DragAndDrop : MonoBehaviour
                 case TouchPhase.Moved:
                     if (_collider == Physics2D.OverlapPoint(touchPos))
                     {
-                        transform.position = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
+                        var nextPos = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
+                        if (GridWorld.Instance.IsWorldPosBlockedAt(nextPos)) nextPos = transform.position;
+                        transform.position = nextPos;
                     }
                     break;
 
@@ -94,6 +70,12 @@ public class DragAndDrop : MonoBehaviour
                         onDragEnd?.Invoke();
                         IsOnDrag = false;
                         SpawnPuzzleBlocks.Instance.CurrentBeingDragged = null;
+
+                        CalculateTargetPosition();
+                        LeanTween.move(gameObject, targetPosition, .1f).setOnComplete(() =>
+                        {
+                            onDroppedToFloor?.Invoke(targetPosition);
+                        });
                     }
                     break;
             }
@@ -102,7 +84,6 @@ public class DragAndDrop : MonoBehaviour
 
     void CalculateTargetPosition()
     {
-        if (!IsOnDrag) return;
         Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.Offset);
         Vector2 flooredWorldPos = GridWorld.Instance.FindFlooredWorldPosAt(gridPos);
         targetPosition = new Vector3(flooredWorldPos.x, flooredWorldPos.y);
@@ -117,6 +98,5 @@ public class DragAndDrop : MonoBehaviour
         Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.Offset);
         Vector2 worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.Offset);
         Utility.DrawQuad(worldPos, .5f, 2);
-
     }
 }
