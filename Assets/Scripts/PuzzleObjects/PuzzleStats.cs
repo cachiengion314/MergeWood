@@ -91,23 +91,25 @@ public class PuzzleStats : MonoBehaviour
         if (gameObject.activeSelf) puzzleBlockPool.Release(gameObject);
     }
 
-    void CheckRuleAt(Vector2 targetPosition)
+    void CheckRuleAt(Vector2 currPosition)
     {
-        var neighbors = GridWorld.Instance.FindNeighborBlockWorldPosAt(targetPosition);
+        var neighbors = GridWorld.Instance.FindNeighborBlockWorldPosAt(currPosition);
         foreach (var neighborPos in neighbors)
         {
-            if (!MatchingRule.IsPassedDownBlock(targetPosition, neighborPos)) continue;
+            if (!MatchingRule.IsPassedDownBlock(currPosition, neighborPos)) continue;
             if (GridWorld.Instance.GetWorldPosValueAt(neighborPos) != puzzleValue) continue;
             // Passed matching rule
             LeanTween.move(gameObject, neighborPos, .07f).setOnComplete(() =>
             {
-                SpawnPuzzleBlocks.Instance.RemovePuzzleBlockRendererAt(targetPosition);
-                SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(targetPosition, 0, null);
+                SpawnPuzzleBlocks.Instance.RemovePuzzleBlockRendererAt(currPosition);
+                SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(currPosition, 0, null);
                 SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(
                     neighborPos,
                     GridWorld.Instance.GetWorldPosValueAt(neighborPos) + 1,
                     SpawnPuzzleBlocks.Instance.GetPuzzleBlockAt(neighborPos)
                 );
+
+                SpawnPuzzleBlocks.Instance.CheckDownBlocks();
             });
             return;
         }

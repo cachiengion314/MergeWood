@@ -94,13 +94,11 @@ public class SpawnPuzzleBlocks : MonoBehaviour
         {
             for (int y = 0; y < ActivePuzzleBlocks.GetLength(1); y += 1)
             {
-                var currPuzzleBlock = ActivePuzzleBlocks[x, y];
-                if (currPuzzleBlock == null) continue;
+                var currBlock = ActivePuzzleBlocks[x, y];
+                if (currBlock == null) continue;
+
                 var gridPos = new Vector2(x, y);
                 var worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.Offset);
-
-                var currBlock = GetPuzzleBlockAt(worldPos);
-                if (currBlock == null) continue;
 
                 var downPos1 = worldPos + Vector2.down;
                 if (GridWorld.Instance.GetWorldPosValueAt(downPos1) == 0)
@@ -119,11 +117,11 @@ public class SpawnPuzzleBlocks : MonoBehaviour
                             SetPuzzleBlockAt(
                                    downPos2,
                                    GridWorld.Instance.GetWorldPosValueAt(downPos2) + 1,
-                                   SpawnPuzzleBlocks.Instance.GetPuzzleBlockAt(downPos2)
+                                   GetPuzzleBlockAt(downPos2)
                                );
                             CheckDownBlocks();
                         });
-                        continue;
+                        return;
                     }
                     // Not passed matching rule, we move currBlock down to empty space
                     LeanTween.move(currBlock, downPos1, .07f).setOnComplete(() =>
@@ -136,6 +134,27 @@ public class SpawnPuzzleBlocks : MonoBehaviour
                            );
                         CheckDownBlocks();
                     });
+                    return;
+                }
+
+                if (
+                    GridWorld.Instance.GetWorldPosValueAt(downPos1) ==
+                    GridWorld.Instance.GetWorldPosValueAt(worldPos)
+                )
+                {
+                    // Passed matching rule at down postion2, we remove currBlock
+                    LeanTween.move(currBlock, downPos1, .07f).setOnComplete(() =>
+                    {
+                        RemovePuzzleBlockRendererAt(worldPos);
+                        SetPuzzleBlockAt(worldPos, 0, null);
+                        SetPuzzleBlockAt(
+                               downPos1,
+                               GridWorld.Instance.GetWorldPosValueAt(downPos1) + 1,
+                               GetPuzzleBlockAt(downPos1)
+                           );
+                        CheckDownBlocks();
+                    });
+                    return;
                 }
             }
         }
