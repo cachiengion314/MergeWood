@@ -34,10 +34,23 @@ public class GridWorld : MonoBehaviour
         }
     }
 
-    public bool IsWorldPosBlockedAt(Vector2 worldPos)
+    public int GetWorldPosValueAt(Vector2 worldPos)
     {
         Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
-        return IsGridPosBlockedAt(gridPos);
+        if (IsGridPosOutsideAt(gridPos)) return -1;
+        return Grid[(int)gridPos.x, (int)gridPos.y];
+    }
+
+    public void SetWorldPosValueAt(Vector2 worldPos, int value = 1)
+    {
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
+        SetGridPosValueAt(gridPos, value);
+    }
+
+    public bool IsWorldPosOutsideAt(Vector2 worldPos)
+    {
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
+        return IsGridPosOutsideAt(gridPos);
     }
 
     public bool IsGridPosOutsideAt(Vector2 gridPos)
@@ -47,7 +60,13 @@ public class GridWorld : MonoBehaviour
         return false;
     }
 
-    public bool IsGridPosBlockedAt(Vector2 gridPos)
+    public bool IsWorldPosOccupiedAt(Vector2 worldPos)
+    {
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
+        return IsGridPosOccupiedAt(gridPos);
+    }
+
+    public bool IsGridPosOccupiedAt(Vector2 gridPos)
     {
         if (gridPos.x >= Grid.GetLength(0) || gridPos.x < 0) return true;
         if (gridPos.y >= Grid.GetLength(1) || gridPos.y < 0) return true;
@@ -66,10 +85,9 @@ public class GridWorld : MonoBehaviour
             {
                 Vector2 pos = GridUtility.ConvertGridPosToWorldPos(new Vector2Int(x, y), Offset);
                 Utility.DrawQuad(pos, 1, 0);
-
                 if (Grid[x, y] > 0)
                 {
-                    Utility.DrawQuad(pos, .5f, 1);
+                    Utility.DrawQuad(pos, .8f, 1);
                 }
             }
         }
@@ -79,19 +97,6 @@ public class GridWorld : MonoBehaviour
     {
         Gizmos.color = new Color(1, 0, 0, 0.5f);
         Gizmos.DrawCube(transform.position, new Vector2(gridSize.x, gridSize.y));
-    }
-
-    public int GetWorldPosValueAt(Vector2 worldPos)
-    {
-        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
-        if (IsGridPosOutsideAt(gridPos)) return 0;
-        return Grid[(int)gridPos.x, (int)gridPos.y];
-    }
-
-    public void SetWorldPosValueAt(Vector2 worldPos, int value = 1)
-    {
-        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
-        SetGridPosValueAt(gridPos, value);
     }
 
     /// <summary>
@@ -114,7 +119,7 @@ public class GridWorld : MonoBehaviour
 
     public Vector2 FindFlooredGridPosAt(Vector2 gridPos)
     {
-        if (IsGridPosBlockedAt(gridPos)) return new Vector2(-1, -1);
+        if (IsGridPosOutsideAt(gridPos)) return new Vector2(-1, -1);
 
         int flooredY = 0;
         int roudedX = Mathf.RoundToInt(gridPos.x);
@@ -124,7 +129,7 @@ public class GridWorld : MonoBehaviour
         }
         var flooredGridPos = new Vector2(roudedX, flooredY);
 
-        if (IsGridPosBlockedAt(flooredGridPos)) return new Vector2(-1, -1);
+        if (IsGridPosOccupiedAt(flooredGridPos)) return new Vector2(-1, -1);
         return flooredGridPos;
     }
 
@@ -159,4 +164,5 @@ public class GridWorld : MonoBehaviour
         }
         return blockGridPoses;
     }
+
 }

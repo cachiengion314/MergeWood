@@ -14,11 +14,12 @@ public class DragAndDrop : MonoBehaviour
     [Header("Events")]
     public Action<Vector2> onDroppedToFloor;
     public Action onDragBegan;
+    public Action onDragMove;
     public Action onDragEnd;
 
     [Header("Settings")]
     private float deltaX, deltaY;
-    private Vector3 dir;
+
     [Range(0, 100)]
     [SerializeField] private float moveSpeed;
 
@@ -58,8 +59,13 @@ public class DragAndDrop : MonoBehaviour
                 case TouchPhase.Moved:
                     if (_collider == Physics2D.OverlapPoint(touchPos))
                     {
+                        onDragMove?.Invoke();
                         var nextPos = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
-                        if (GridWorld.Instance.IsWorldPosBlockedAt(nextPos)) nextPos = transform.position;
+                        // var dir = ((Vector3)nextPos - transform.position).normalized;
+                        // var currGridPos = GridUtility.ConvertWorldPosToGridPos((Vector2)transform.position, GridWorld.Instance.Offset);
+                        // var currWorldPos = GridUtility.ConvertGridPosToWorldPos(currGridPos, GridWorld.Instance.Offset);
+                        // var nextBlockPos = currWorldPos +(Vector2) dir;
+                        // if (GridWorld.Instance.IsWorldPosOccupiedAt(nextBlockPos)) nextPos = transform.position;
                         transform.position = nextPos;
                     }
                     break;

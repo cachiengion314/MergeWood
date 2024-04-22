@@ -11,6 +11,7 @@ public class SpawnPuzzleBlocks : MonoBehaviour
     public DragAndDrop CurrentBeingDragged;
     public GameObject[,] ActivePuzzleBlocks;
     private ObjectPool<GameObject> puzzleBlockPool;
+    public Vector2Int randomRangePuzzleValue;
 
     // [Header("Settings")]
     public int TotalPuzzleBlockAmount { get; private set; }
@@ -33,6 +34,11 @@ public class SpawnPuzzleBlocks : MonoBehaviour
         );
 
         SpawnBlocks();
+    }
+
+    private void Update()
+    {
+        DrawActivePuzzleBlocks();
     }
 
     private GameObject CreateBlockPoolObj()
@@ -69,7 +75,7 @@ public class SpawnPuzzleBlocks : MonoBehaviour
             if (flooredGridPos.x < 0) continue;
 
             var puzzleBlockClone = puzzleBlockPool.Get();
-            int _puzzleValue = Random.Range(1, 5);
+            int _puzzleValue = Random.Range(randomRangePuzzleValue.x, randomRangePuzzleValue.y);
 
             Vector2 flooredWorldPos = GridUtility.ConvertGridPosToWorldPos(flooredGridPos, GridWorld.Instance.Offset);
             puzzleBlockClone.transform.position = flooredWorldPos;
@@ -82,16 +88,14 @@ public class SpawnPuzzleBlocks : MonoBehaviour
         }
     }
 
-    public void MovePuzzleBlockTo(Vector2 desWorldPos, Vector2 lastWorldPos)
+    public void SetPuzzleBlockOccupiedAt(Vector2 worldPos, GameObject block)
     {
-        var currPuzzleBlock = FindPuzzleBlockAt(lastWorldPos);
-        var lasGridPos = GridUtility.ConvertWorldPosToGridPos(lastWorldPos, GridWorld.Instance.Offset);
-        var desGridPos = GridUtility.ConvertWorldPosToGridPos(desWorldPos, GridWorld.Instance.Offset);
-        ActivePuzzleBlocks[(int)lasGridPos.x, (int)lasGridPos.y] = null;
-        ActivePuzzleBlocks[(int)desGridPos.x, (int)desGridPos.y] = currPuzzleBlock;
+        var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, GridWorld.Instance.Offset);
+        if (GridWorld.Instance.IsGridPosOutsideAt(gridPos)) return;
+        ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y] = block;
     }
 
-    public void RemovePuzzleBlockAt(Vector2 worldPos)
+    public void RemovePuzzleBlockRendererAt(Vector2 worldPos)
     {
         var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, GridWorld.Instance.Offset);
         if (GridWorld.Instance.IsGridPosOutsideAt(gridPos)) return;
@@ -102,15 +106,55 @@ public class SpawnPuzzleBlocks : MonoBehaviour
         ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y] = null;
     }
 
-    public GameObject FindPuzzleBlockAt(Vector2 worldPos)
+    public GameObject GetPuzzleBlockAt(Vector2 worldPos)
     {
         var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, GridWorld.Instance.Offset);
-        return FindPuzzleBlockIn(gridPos);
+        return GetPuzzleBlockIn(gridPos);
     }
 
-    GameObject FindPuzzleBlockIn(Vector2 gridPos)
+    GameObject GetPuzzleBlockIn(Vector2 gridPos)
     {
         if (GridWorld.Instance.IsGridPosOutsideAt(gridPos)) return null;
         return ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y];
+    }
+
+    /// <summary>
+    /// Sync position value between GridWorld.Grid and SpawnPuzzleBlocks.ActivePuzzleBlocks
+    /// </summary>
+    /// <param name="desWorldPos"></param>
+    /// <param name="lastWorldPos"></param>
+    public void SetPuzzleBlockAt(Vector2 desWorldPos, int value, GameObject block)
+    {
+        GridWorld.Instance.SetWorldPosValueAt(desWorldPos, value);
+        SetPuzzleBlockOccupiedAt(desWorldPos, block);
+
+        if (block)
+        {
+            block.GetComponent<PuzzleStats>().LastLandingPos = desWorldPos;
+            block.GetComponent<PuzzleStats>().PuzzleValue = value;
+        }
+    }
+
+    /// <summary>
+    /// For debug only
+    /// </summary>
+    void DrawActivePuzzleBlocks()
+    {
+        for (int x = 0; x < ActivePuzzleBlocks.GetLength(0); x += 1)
+        {
+            for (int y = 0; y < ActivePuzzleBlocks.GetLength(1); y += 1)
+            {
+                Vector2 pos = GridUtility.ConvertGridPosToWorldPos(
+                    new Vector2Int(x, y) + new Vector2(ActivePuzzleBlocks.GetLength(0), 0),
+                    GridWorld.Instance.Offset
+                );
+
+                Utility.DrawQuad(pos, 1, 0);
+                if (ActivePuzzleBlocks[x, y] != null)
+                {
+                    Utility.DrawQuad(pos, .8f, 1);
+                }
+            }
+        }
     }
 }
