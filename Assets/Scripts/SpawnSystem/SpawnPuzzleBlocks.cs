@@ -88,6 +88,21 @@ public class SpawnPuzzleBlocks : MonoBehaviour
         }
     }
 
+    public void CheckDownBlocks()
+    {
+        for (int x = 0; x < ActivePuzzleBlocks.GetLength(0); x += 1)
+        {
+            for (int y = 0; y < ActivePuzzleBlocks.GetLength(1); y += 1)
+            {
+                var currPuzzleBlock = ActivePuzzleBlocks[x, y];
+                if (currPuzzleBlock == null) continue;
+                var gridPos = new Vector2(x, y);
+                var worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.Offset);
+                currPuzzleBlock.GetComponent<PuzzleStats>().CheckDownBlockAt(worldPos);
+            }
+        }
+    }
+
     public void SetPuzzleBlockOccupiedAt(Vector2 worldPos, GameObject block)
     {
         var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, GridWorld.Instance.Offset);
