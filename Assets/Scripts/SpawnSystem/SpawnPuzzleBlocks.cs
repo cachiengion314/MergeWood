@@ -98,7 +98,45 @@ public class SpawnPuzzleBlocks : MonoBehaviour
                 if (currPuzzleBlock == null) continue;
                 var gridPos = new Vector2(x, y);
                 var worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.Offset);
-                currPuzzleBlock.GetComponent<PuzzleStats>().CheckDownBlockAt(worldPos);
+
+                var currBlock = GetPuzzleBlockAt(worldPos);
+                if (currBlock == null) continue;
+
+                var downPos1 = worldPos + Vector2.down;
+                if (GridWorld.Instance.GetWorldPosValueAt(downPos1) == 0)
+                {
+                    var downPos2 = worldPos + Vector2.down * 2;
+                    if (
+                        GridWorld.Instance.GetWorldPosValueAt(worldPos) ==
+                        GridWorld.Instance.GetWorldPosValueAt(downPos2)
+                    )
+                    {
+                        // Passed matching rule at down postion2, we remove currBlock
+                        LeanTween.move(currBlock, downPos2, .07f).setOnComplete(() =>
+                        {
+                            RemovePuzzleBlockRendererAt(worldPos);
+                            SetPuzzleBlockAt(worldPos, 0, null);
+                            SetPuzzleBlockAt(
+                                   downPos2,
+                                   GridWorld.Instance.GetWorldPosValueAt(downPos2) + 1,
+                                   SpawnPuzzleBlocks.Instance.GetPuzzleBlockAt(downPos2)
+                               );
+                            CheckDownBlocks();
+                        });
+                        continue;
+                    }
+                    // Not passed matching rule, we move currBlock down to empty space
+                    LeanTween.move(currBlock, downPos1, .07f).setOnComplete(() =>
+                    {
+                        SetPuzzleBlockAt(worldPos, 0, null);
+                        SetPuzzleBlockAt(
+                               downPos1,
+                               currBlock.GetComponent<PuzzleStats>().PuzzleValue,
+                               currBlock
+                           );
+                        CheckDownBlocks();
+                    });
+                }
             }
         }
     }

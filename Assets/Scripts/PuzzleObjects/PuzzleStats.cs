@@ -83,48 +83,6 @@ public class PuzzleStats : MonoBehaviour
         }
     }
 
-    public void CheckDownBlockAt(Vector2 worldPos)
-    {
-        var currBlock = SpawnPuzzleBlocks.Instance.GetPuzzleBlockAt(worldPos);
-        if (currBlock == null) return;
-
-        var downPos1 = worldPos + Vector2.down;
-        if (GridWorld.Instance.GetWorldPosValueAt(downPos1) == 0)
-        {
-            var downPos2 = worldPos + Vector2.down * 2;
-            if (
-                GridWorld.Instance.GetWorldPosValueAt(worldPos) ==
-                GridWorld.Instance.GetWorldPosValueAt(downPos2)
-            )
-            {
-                // Passed matching rule at down postion2, we remove currBlock
-                LeanTween.move(currBlock, downPos2, .07f).setOnComplete(() =>
-                {
-                    SpawnPuzzleBlocks.Instance.RemovePuzzleBlockRendererAt(worldPos);
-                    SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(worldPos, 0, null);
-                    SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(
-                           downPos2,
-                           GridWorld.Instance.GetWorldPosValueAt(downPos2) + 1,
-                           SpawnPuzzleBlocks.Instance.GetPuzzleBlockAt(downPos2)
-                       );
-                    CheckDownBlockAt(worldPos + Vector2.up);
-                });
-                return;
-            }
-            // Not passed matching rule, we move currBlock down to empty space
-            LeanTween.move(currBlock, downPos1, .07f).setOnComplete(() =>
-            {
-                SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(worldPos, 0, null);
-                SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(
-                       downPos1,
-                       currBlock.GetComponent<PuzzleStats>().PuzzleValue,
-                       currBlock
-                   );
-                CheckDownBlockAt(worldPos + Vector2.up);
-            });
-        }
-    }
-
     /// <summary>
     /// Like Destroy functioon
     /// </summary>
