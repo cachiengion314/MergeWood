@@ -34,6 +34,23 @@ public class GridWorld : MonoBehaviour
         }
     }
 
+    public Vector2 ConvertGridPosToWorldPos(Vector2 gridPos)
+    {
+        if (IsGridPosOutsideAt(gridPos)) return new Vector2(-1, -1);
+
+        return new Vector2(gridPos.x, gridPos.y) - Offset;
+    }
+
+    public Vector2 ConvertWorldPosToGridPos(Vector2 worldPos)
+    {
+        int xRound = Mathf.RoundToInt(worldPos.x + Offset.x);
+        int yRound = Mathf.RoundToInt(worldPos.y + Offset.y);
+        var gridPos = new Vector2(xRound, yRound);
+        if (IsGridPosOutsideAt(gridPos)) return new Vector2(-1, -1);
+
+        return gridPos;
+    }
+
     public int GetWorldPosValueAt(Vector2 worldPos)
     {
         Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
@@ -45,6 +62,11 @@ public class GridWorld : MonoBehaviour
     {
         Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, Offset);
         SetGridPosValueAt(gridPos, value);
+    }
+    public void SetGridPosValueAt(Vector2 gridPos, int value = 1)
+    {
+        if (IsGridPosOutsideAt(gridPos)) return;
+        Grid[(int)gridPos.x, (int)gridPos.y] = value;
     }
 
     public bool IsWorldPosOutsideAt(Vector2 worldPos)
@@ -72,6 +94,35 @@ public class GridWorld : MonoBehaviour
         if (gridPos.y >= Grid.GetLength(1) || gridPos.y < 0) return true;
         if (Grid[(int)gridPos.x, (int)gridPos.y] > 0) return true;
         return false;
+    }
+
+    public bool IsWorldDirObstructedAt(Vector2 worldPos, Vector2 worldDir)
+    {
+        var gridPos = ConvertWorldPosToGridPos(worldPos);
+        var desWorldPos = worldPos + worldDir;
+        var desGridPos = ConvertWorldPosToGridPos(desWorldPos);
+        var gridDir = desGridPos - gridPos;
+        return IsGridDirObstructedAt(gridPos, gridDir);
+    }
+
+    public bool IsGridDirObstructedAt(Vector2 gridPos, Vector2 gridDir)
+    {
+        if (IsGridPosOutsideAt(gridPos)) return true;
+
+        var nextGridPos = gridPos + gridDir.normalized;
+        if (IsGridPosOccupiedAt(nextGridPos)) return true;
+
+        return false;
+    }
+
+    public bool IsDirDiagonal(Vector2 dir)
+    {
+        var nextPos = Vector2.zero + dir.normalized;
+        int xRound = Mathf.RoundToInt(nextPos.x);
+        int yRound = Mathf.RoundToInt(nextPos.y);
+        if (yRound == 0) return false;
+
+        return Mathf.Abs(xRound / yRound) == 1;
     }
 
     /// <summary>
@@ -102,12 +153,6 @@ public class GridWorld : MonoBehaviour
     /// <summary>
     /// Helpers function section
     /// </summary>
-    public void SetGridPosValueAt(Vector2 gridPos, int value = 1)
-    {
-        if (IsGridPosOutsideAt(gridPos)) return;
-        Grid[(int)gridPos.x, (int)gridPos.y] = value;
-    }
-
     public Vector2 FindFlooredWorldPosAt(Vector2 worldPos)
     {
         Vector2 flooredGridPos = FindFlooredGridPosAt(worldPos);
