@@ -92,7 +92,9 @@ public class GridWorld : MonoBehaviour
     {
         if (gridPos.x >= Grid.GetLength(0) || gridPos.x < 0) return true;
         if (gridPos.y >= Grid.GetLength(1) || gridPos.y < 0) return true;
-        if (Grid[(int)gridPos.x, (int)gridPos.y] > 0) return true;
+        var xRound = Mathf.RoundToInt(gridPos.x);
+        var yRound = Mathf.RoundToInt(gridPos.y);
+        if (Grid[xRound, yRound] > 0) return true;
         return false;
     }
 
@@ -110,6 +112,8 @@ public class GridWorld : MonoBehaviour
         if (IsGridPosOutsideAt(gridPos)) return true;
 
         var nextGridPos = gridPos + gridDir.normalized;
+        Utility.Print("gridDir " + gridDir);
+        Utility.Print("nextGridPos " + nextGridPos);
         if (IsGridPosOccupiedAt(nextGridPos)) return true;
 
         return false;

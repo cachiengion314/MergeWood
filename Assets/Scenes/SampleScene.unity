@@ -289,10 +289,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d5b5099ecfd04328b2fb01477f800b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  StartPuzzleBlockAmount: 18
+  StartPuzzleBlockAmount: 15
   puzzleBlock: {fileID: 3423673379139951537, guid: 60af40760a55d42e2aa06fd336a05998, type: 3}
   CurrentBeingDragged: {fileID: 0}
-  randomRangePuzzleValue: {x: 1, y: 4}
+  randomRangePuzzleValue: {x: 1, y: 5}
 --- !u!4 &610754651
 Transform:
   m_ObjectHideFlags: 0
