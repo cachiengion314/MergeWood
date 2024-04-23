@@ -48,7 +48,7 @@ public class PuzzleStats : MonoBehaviour
 
     private void DragAndDrop_onDragBegan()
     {
-        SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(LastLandingPos, 0, null);
+        SpawnPuzzleBlocks.Instance.SetPuzzleBlockValueAt(LastLandingPos, 0, null);
     }
 
     private void DragAndDrop_onDragMove()
@@ -58,7 +58,7 @@ public class PuzzleStats : MonoBehaviour
 
     private void DragAndDrop_onDroppedToFloor(Vector2 targetPosition)
     {
-        SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(targetPosition, puzzleValue, gameObject);
+        SpawnPuzzleBlocks.Instance.SetPuzzleBlockValueAt(targetPosition, puzzleValue, gameObject);
         CheckRuleAt(targetPosition);
 
         isDetectChangingGridPos = false;
@@ -84,7 +84,7 @@ public class PuzzleStats : MonoBehaviour
     }
 
     /// <summary>
-    /// Like Destroy functioon
+    /// Like Destroy functioon but for objects pooling
     /// </summary>
     public void PoolDestroy()
     {
@@ -99,18 +99,9 @@ public class PuzzleStats : MonoBehaviour
             if (!MatchingRule.IsPassedDownBlock(currPosition, neighborPos)) continue;
             if (GridWorld.Instance.GetWorldPosValueAt(neighborPos) != puzzleValue) continue;
             // Passed matching rule
-            LeanTween.move(gameObject, neighborPos, .07f).setOnComplete(() =>
-            {
-                SpawnPuzzleBlocks.Instance.RemovePuzzleBlockRendererAt(currPosition);
-                SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(currPosition, 0, null);
-                SpawnPuzzleBlocks.Instance.SetPuzzleBlockAt(
-                    neighborPos,
-                    GridWorld.Instance.GetWorldPosValueAt(neighborPos) + 1,
-                    SpawnPuzzleBlocks.Instance.GetPuzzleBlockAt(neighborPos)
-                );
-
-                SpawnPuzzleBlocks.Instance.CheckDownBlocks();
-            });
+            SpawnPuzzleBlocks.Instance.MatchTo(
+                neighborPos, currPosition, gameObject, SpawnPuzzleBlocks.Instance.CheckDownBlocks
+            );
             return;
         }
     }

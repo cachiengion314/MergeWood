@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -33,12 +34,17 @@ public class SpawnPuzzleBlocks : MonoBehaviour
             true, TotalPuzzleBlockAmount, TotalPuzzleBlockAmount
         );
 
-        SpawnBlocks();
+        SpawnBlocks(StartPuzzleBlockAmount);
+        CheckDownBlocks();
     }
 
     private void Update()
     {
         DrawActivePuzzleBlocks();
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            MoveRowBlocksAt(1, Vector2.up);
+        }
     }
 
     private GameObject CreateBlockPoolObj()
@@ -63,11 +69,11 @@ public class SpawnPuzzleBlocks : MonoBehaviour
         Destroy(obj);
     }
 
-    void SpawnBlocks()
+    void SpawnBlocks(int amount)
     {
         ActivePuzzleBlocks = new GameObject[GridWorld.Instance.Grid.GetLength(0), GridWorld.Instance.Grid.GetLength(1)];
 
-        for (int i = 0; i < StartPuzzleBlockAmount; i++)
+        for (int i = 0; i < amount; i++)
         {
             int x = i % GridWorld.Instance.Grid.GetLength(0);
             Vector2 highGridPos = new(x, GridWorld.Instance.Grid.GetLength(1) - 1);
@@ -75,7 +81,7 @@ public class SpawnPuzzleBlocks : MonoBehaviour
             if (flooredGridPos.x < 0) continue;
 
             var puzzleBlockClone = puzzleBlockPool.Get();
-            int _puzzleValue = Random.Range(randomRangePuzzleValue.x, randomRangePuzzleValue.y);
+            int _puzzleValue = UnityEngine.Random.Range(randomRangePuzzleValue.x, randomRangePuzzleValue.y);
 
             Vector2 flooredWorldPos = GridUtility.ConvertGridPosToWorldPos(flooredGridPos, GridWorld.Instance.Offset);
             puzzleBlockClone.transform.position = flooredWorldPos;
@@ -85,6 +91,29 @@ public class SpawnPuzzleBlocks : MonoBehaviour
             GridWorld.Instance.SetGridPosValueAt(flooredGridPos, _puzzleValue);
 
             ActivePuzzleBlocks[(int)flooredGridPos.x, (int)flooredGridPos.y] = puzzleBlockClone;
+        }
+    }
+
+    /// <summary>
+    /// rowIndex aka y index
+    /// </summary>
+    /// <param name="rowIndex"></param>
+    /// <param name="dir"></param>
+    public void MoveRowBlocksAt(int rowIndex, Vector2 moveDir)
+    {
+        for (int y = ActivePuzzleBlocks.GetLength(1) - 1; y >= rowIndex; y--)
+        {
+            for (int x = 0; x < ActivePuzzleBlocks.GetLength(0); x++)
+            {
+                var gridPos = new Vector2(x, y);
+                var currBlock = ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y];
+                if (currBlock == null) continue;
+
+                var desGridPos = gridPos + moveDir;
+                var currWorldPos = GridWorld.Instance.ConvertGridPosToWorldPos(gridPos);
+                var desWorldPos = GridWorld.Instance.ConvertGridPosToWorldPos(desGridPos);
+                MoveTo(desWorldPos, currWorldPos, currBlock, () => { });
+            }
         }
     }
 
@@ -98,66 +127,67 @@ public class SpawnPuzzleBlocks : MonoBehaviour
                 if (currBlock == null) continue;
 
                 var gridPos = new Vector2(x, y);
-                var worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.Offset);
+                var currWorldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.Offset);
 
-                var downPos1 = worldPos + Vector2.down;
+                var downPos1 = currWorldPos + Vector2.down;
+                // check empty space
                 if (GridWorld.Instance.GetWorldPosValueAt(downPos1) == 0)
                 {
-                    var downPos2 = worldPos + Vector2.down * 2;
+                    var downPos2 = currWorldPos + Vector2.down * 2;
                     if (
-                        GridWorld.Instance.GetWorldPosValueAt(worldPos) ==
+                        GridWorld.Instance.GetWorldPosValueAt(currWorldPos) ==
                         GridWorld.Instance.GetWorldPosValueAt(downPos2)
                     )
                     {
-                        // Passed matching rule at down postion2, we remove currBlock
-                        LeanTween.move(currBlock, downPos2, .07f).setOnComplete(() =>
-                        {
-                            RemovePuzzleBlockRendererAt(worldPos);
-                            SetPuzzleBlockAt(worldPos, 0, null);
-                            SetPuzzleBlockAt(
-                                   downPos2,
-                                   GridWorld.Instance.GetWorldPosValueAt(downPos2) + 1,
-                                   GetPuzzleBlockAt(downPos2)
-                               );
-                            CheckDownBlocks();
-                        });
+                        // Passed matching rule at down postion2
+                        MatchTo(downPos2, currWorldPos, currBlock, CheckDownBlocks);
                         return;
                     }
                     // Not passed matching rule, we move currBlock down to empty space
-                    LeanTween.move(currBlock, downPos1, .07f).setOnComplete(() =>
-                    {
-                        SetPuzzleBlockAt(worldPos, 0, null);
-                        SetPuzzleBlockAt(
-                               downPos1,
-                               currBlock.GetComponent<PuzzleStats>().PuzzleValue,
-                               currBlock
-                           );
-                        CheckDownBlocks();
-                    });
+                    MoveTo(downPos1, currWorldPos, currBlock, CheckDownBlocks);
                     return;
                 }
-
+                // check occupied space
                 if (
                     GridWorld.Instance.GetWorldPosValueAt(downPos1) ==
-                    GridWorld.Instance.GetWorldPosValueAt(worldPos)
+                    GridWorld.Instance.GetWorldPosValueAt(currWorldPos)
                 )
                 {
-                    // Passed matching rule at down postion2, we remove currBlock
-                    LeanTween.move(currBlock, downPos1, .07f).setOnComplete(() =>
-                    {
-                        RemovePuzzleBlockRendererAt(worldPos);
-                        SetPuzzleBlockAt(worldPos, 0, null);
-                        SetPuzzleBlockAt(
-                               downPos1,
-                               GridWorld.Instance.GetWorldPosValueAt(downPos1) + 1,
-                               GetPuzzleBlockAt(downPos1)
-                           );
-                        CheckDownBlocks();
-                    });
+                    // Passed matching rule at down postion1
+                    MatchTo(downPos1, currWorldPos, currBlock, CheckDownBlocks);
                     return;
                 }
             }
         }
+    }
+
+    public void MoveTo(Vector2 desWorldPos, Vector2 currWorldPos, GameObject currBlock, Action callback)
+    {
+        LeanTween.move(currBlock, desWorldPos, .07f).setOnComplete(() =>
+        {
+            SetPuzzleBlockValueAt(currWorldPos, 0, null);
+            SetPuzzleBlockValueAt(
+                    desWorldPos,
+                    currBlock.GetComponent<PuzzleStats>().PuzzleValue,
+                    currBlock
+                );
+            callback?.Invoke();
+        });
+    }
+
+    public void MatchTo(Vector2 desWorldPos, Vector2 currWorldPos, GameObject currBlock, Action callback)
+    {
+        LeanTween.move(currBlock, desWorldPos, .07f).setOnComplete(() =>
+        {
+            RemovePuzzleBlockRendererAt(currWorldPos);
+            SetPuzzleBlockValueAt(currWorldPos, 0, null);
+            SetPuzzleBlockValueAt(
+                    desWorldPos,
+                    GridWorld.Instance.GetWorldPosValueAt(desWorldPos) + 1,
+                    GetPuzzleBlockAt(desWorldPos)
+                );
+            callback?.Invoke();
+        });
     }
 
     public void SetPuzzleBlockOccupiedAt(Vector2 worldPos, GameObject block)
@@ -195,7 +225,7 @@ public class SpawnPuzzleBlocks : MonoBehaviour
     /// </summary>
     /// <param name="desWorldPos"></param>
     /// <param name="lastWorldPos"></param>
-    public void SetPuzzleBlockAt(Vector2 desWorldPos, int value, GameObject block)
+    public void SetPuzzleBlockValueAt(Vector2 desWorldPos, int value, GameObject block)
     {
         GridWorld.Instance.SetWorldPosValueAt(desWorldPos, value);
         SetPuzzleBlockOccupiedAt(desWorldPos, block);

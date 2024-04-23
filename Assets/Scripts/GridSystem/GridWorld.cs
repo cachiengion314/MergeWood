@@ -112,8 +112,9 @@ public class GridWorld : MonoBehaviour
         if (IsGridPosOutsideAt(gridPos)) return true;
 
         var nextGridPos = gridPos + gridDir.normalized;
-        Utility.Print("gridDir " + gridDir);
-        Utility.Print("nextGridPos " + nextGridPos);
+        // Utility.Print("gridDir " + gridDir);
+        // Utility.Print("gridDir.normalized " + gridDir.normalized);
+        // Utility.Print("nextGridPos " + nextGridPos);
         if (IsGridPosOccupiedAt(nextGridPos)) return true;
 
         return false;
