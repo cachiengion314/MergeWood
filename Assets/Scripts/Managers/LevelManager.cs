@@ -1,15 +1,34 @@
+using System;
 using UnityEngine;
+
+public enum GameState
+{
+    Menu,
+    Gameplay,
+    Gameover,
+}
 
 public class LevelManager : MonoBehaviour
 {
     public static LevelManager Instance { get; private set; }
 
     [Header("Injected Dependencies")]
-    public PuzzleManager puzzleManager;
+    [SerializeField] GridWorld gridWorld;
+
+    [Header("Events")]
+    public Action<GameState> onGameStateChanged;
+
+    [Header("Settings")]
+    GameState _gameState;
     public int StartPuzzleBlockAmount;
+    [Range(0, 10)]
+    public float StartSpawnTime;
+    [Range(0, 10)]
     public float IntervalSpawnTime;
-    public bool shouldIntervalContinue = true;
-    float timer;
+    public bool shouldStartSpawnTimer = true;
+    public bool shouldIntervalSpawnTimer = true;
+    float intervalSpawnTimer;
+    float startSpawnTimer;
 
     private void Awake()
     {
@@ -18,27 +37,74 @@ public class LevelManager : MonoBehaviour
 
     private void Start()
     {
-        timer = IntervalSpawnTime;
+        intervalSpawnTimer = IntervalSpawnTime;
+        startSpawnTimer = StartSpawnTime;
+
+        SetGameState(GameState.Menu);
     }
 
     private void Update()
     {
-        if (!shouldIntervalContinue)
-        {
-            timer = IntervalSpawnTime;
-            return;
-        };
+        StartSpawnTimerInvoker();
+        IntervalSpawnTimerInvoker();
+        CheckGameOver();
+    }
 
-        timer -= Time.deltaTime;
-        if (timer <= 0)
+    public void SetGameState(GameState state)
+    {
+        _gameState = state;
+        onGameStateChanged?.Invoke(state);
+    }
+
+    public GameState GetGameState()
+    {
+        return _gameState;
+    }
+
+    public void CheckGameOver()
+    {
+        if (_gameState == GameState.Gameover) return;
+        if (PuzzleManager.Instance.IsHighestRowHasPuzzle())
         {
-            SpawnBlocks(12);
-            timer = IntervalSpawnTime;
+            _gameState = GameState.Gameover;
+            LeanTween.delayedCall(IntervalSpawnTime, () =>
+            {
+                SetGameState(GameState.Gameover);
+            });
         }
     }
 
-    void SpawnBlocks(int amount)
+    void StartSpawnTimerInvoker()
     {
-     
+        if (_gameState != GameState.Gameplay || !shouldStartSpawnTimer) return;
+
+        startSpawnTimer -= Time.deltaTime;
+        if (startSpawnTimer <= 0)
+        {
+            shouldStartSpawnTimer = false;
+
+            PuzzleManager.Instance.SpawnBlocks(StartPuzzleBlockAmount);
+            PuzzleManager.Instance.CheckDownBlocks();
+        }
+    }
+
+    void IntervalSpawnTimerInvoker()
+    {
+        if (_gameState != GameState.Gameplay || !shouldIntervalSpawnTimer)
+        {
+            intervalSpawnTimer = IntervalSpawnTime;
+            return;
+        };
+        if (PuzzleManager.Instance.CurrentBeingDragged) return;
+
+        intervalSpawnTimer -= Time.deltaTime;
+        if (intervalSpawnTimer <= 0)
+        {
+            intervalSpawnTimer = IntervalSpawnTime;
+
+            PuzzleManager.Instance.MoveRowBlocksAt(0, Vector2.up);
+            PuzzleManager.Instance.SpawnBlocks(gridWorld.Grid.GetLength(0));
+            PuzzleManager.Instance.CheckDownBlocks();
+        }
     }
 }

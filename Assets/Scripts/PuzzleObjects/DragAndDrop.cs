@@ -16,6 +16,7 @@ public class DragAndDrop : MonoBehaviour
     public Action<Vector2> onDroppedToFloor;
     public Action onDragBegan;
     public Action onDragMove;
+    public Action<Vector2> onDragCollided;
     public Action onDragEnd;
 
     [Header("Settings")]
@@ -39,6 +40,8 @@ public class DragAndDrop : MonoBehaviour
 
     void DragDropControl()
     {
+        if (LevelManager.Instance.GetGameState() != GameState.Gameplay) return;
+
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
@@ -64,13 +67,22 @@ public class DragAndDrop : MonoBehaviour
                         onDragMove?.Invoke();
                         var nextPos = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
                         var nextDir = nextPos - (Vector2)transform.position;
+
                         if (
-                            gridWorld.IsWorldDirObstructedAt(transform.position, nextDir)
-                            || gridWorld.IsWorldPosOutsideAt(nextPos)
-                        )
+                             gridWorld.IsWorldDirObstructedAt(transform.position, nextDir)
+                             || gridWorld.IsWorldPosOutsideAt(nextPos)
+                         )
                         {
+                            var val = gridWorld.GetWorldPosValueAt(
+                                nextPos
+                            );
+                            if (val > 0)
+                            {
+                                onDragCollided?.Invoke(nextPos);
+                            }
                             nextPos = transform.position;
                         }
+
                         transform.position = nextPos;
                     }
                     break;
@@ -83,9 +95,10 @@ public class DragAndDrop : MonoBehaviour
                         PuzzleManager.Instance.CurrentBeingDragged = null;
 
                         CalculateTargetPosition();
+                        onDroppedToFloor?.Invoke(targetPosition);
                         LeanTween.move(gameObject, targetPosition, .1f).setOnComplete(() =>
                         {
-                            onDroppedToFloor?.Invoke(targetPosition);
+                            // something in here
                         });
                     }
                     break;
@@ -95,7 +108,7 @@ public class DragAndDrop : MonoBehaviour
 
     void CalculateTargetPosition()
     {
-        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, gridWorld.Offset);
+        Vector2 gridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
         Vector2 flooredWorldPos = gridWorld.FindFlooredWorldPosAt(gridPos);
         targetPosition = new Vector3(flooredWorldPos.x, flooredWorldPos.y);
     }
@@ -106,8 +119,8 @@ public class DragAndDrop : MonoBehaviour
     void DrawGrabedBlock()
     {
         if (!IsOnDrag) return;
-        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, gridWorld.Offset);
-        Vector2 worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, gridWorld.Offset);
+        Vector2 gridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
+        Vector2 worldPos = gridWorld.ConvertGridPosToWorldPos(gridPos);
         Utility.DrawQuad(worldPos, .5f, 2);
     }
 }

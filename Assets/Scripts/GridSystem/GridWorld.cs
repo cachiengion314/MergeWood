@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class GridWorld : MonoBehaviour
 {
-    public static GridWorld Instance { get; private set; }
     [SerializeField] Vector2Int gridSize;
     public int[,] Grid { get; private set; }
     public Vector2 Offset { get; private set; }
@@ -11,7 +10,6 @@ public class GridWorld : MonoBehaviour
 
     private void Awake()
     {
-        Instance = this;
         BakingGridWorld();
     }
 

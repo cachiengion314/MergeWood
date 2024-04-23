@@ -28,7 +28,7 @@ public class PuzzleStats : MonoBehaviour
     {
         dragAndDrop.onDroppedToFloor += DragAndDrop_onDroppedToFloor;
         dragAndDrop.onDragBegan += DragAndDrop_onDragBegan;
-        dragAndDrop.onDragMove += DragAndDrop_onDragMove;
+        dragAndDrop.onDragCollided += DragAndDrop_onDragCollided;
 
         valueText.text = puzzleValue.ToString();
     }
@@ -37,14 +37,16 @@ public class PuzzleStats : MonoBehaviour
     {
         DetectChangingGridPos();
 
+#if UNITY_EDITOR
         Utility.DrawQuad(LastLandingPos, .5f, 0);
+#endif
     }
 
     private void OnDestroy()
     {
         dragAndDrop.onDroppedToFloor -= DragAndDrop_onDroppedToFloor;
         dragAndDrop.onDragBegan -= DragAndDrop_onDragBegan;
-        dragAndDrop.onDragBegan -= DragAndDrop_onDragMove;
+        dragAndDrop.onDragCollided -= DragAndDrop_onDragCollided;
     }
 
     private void DragAndDrop_onDragBegan()
@@ -52,9 +54,23 @@ public class PuzzleStats : MonoBehaviour
         PuzzleManager.Instance.SetPuzzleBlockValueAt(LastLandingPos, 0, null);
     }
 
-    private void DragAndDrop_onDragMove()
+    private void DragAndDrop_onDragCollided(Vector2 inputPos)
     {
+        var currBlock = PuzzleManager.Instance.CurrentBeingDragged;
+        var currBlockPuzzleStats = currBlock.GetComponent<PuzzleStats>();
 
+        var collidedBlockValue = gridWorld.GetWorldPosValueAt(inputPos);
+        if (currBlockPuzzleStats.PuzzleValue != collidedBlockValue) return;
+
+        currBlockPuzzleStats.PoolDestroy();
+        PuzzleManager.Instance.SetPuzzleBlockValueAt(
+                inputPos,
+                gridWorld.GetWorldPosValueAt(inputPos) + 1,
+                PuzzleManager.Instance.GetPuzzleBlockAt(inputPos)
+        );
+        PuzzleManager.Instance.CurrentBeingDragged = null;
+
+        PuzzleManager.Instance.CheckDownBlocks();
     }
 
     private void DragAndDrop_onDroppedToFloor(Vector2 targetPosition)
@@ -70,12 +86,8 @@ public class PuzzleStats : MonoBehaviour
         if (!dragAndDrop.IsOnDrag) return;
         if (isDetectChangingGridPos) return;
 
-        Vector2 currGridPos = GridUtility.ConvertWorldPosToGridPos(
-            transform.position, gridWorld.Offset
-        );
-        Vector2 currWorldPos = GridUtility.ConvertGridPosToWorldPos(
-            currGridPos, gridWorld.Offset
-        );
+        Vector2 currGridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
+        Vector2 currWorldPos = gridWorld.ConvertGridPosToWorldPos(currGridPos);
         if (!currWorldPos.Equals(LastLandingPos))
         {
             isDetectChangingGridPos = true;

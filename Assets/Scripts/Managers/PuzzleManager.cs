@@ -14,7 +14,7 @@ public class PuzzleManager : MonoBehaviour
     private ObjectPool<GameObject> puzzleBlockPool;
     public Vector2Int randomRangePuzzleValue;
 
-    // [Header("Settings")]
+    // Settting
     public int TotalPuzzleBlockAmount { get; private set; }
 
     private void Awake()
@@ -41,10 +41,6 @@ public class PuzzleManager : MonoBehaviour
     {
 #if UNITY_EDITOR
         DrawActivePuzzleBlocks();
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            MoveRowBlocksAt(1, Vector2.up);
-        }
 #endif
     }
 
@@ -119,6 +115,19 @@ public class PuzzleManager : MonoBehaviour
         }
     }
 
+    public bool IsHighestRowHasPuzzle()
+    {
+        var lastRow = ActivePuzzleBlocks.GetLength(1) - 1;
+        for (int x = 0; x < ActivePuzzleBlocks.GetLength(0); x += 1)
+        {
+            var currBlock = ActivePuzzleBlocks[x, lastRow];
+            if (currBlock == null) continue;
+
+            return true;
+        }
+        return false;
+    }
+
     public void CheckDownBlocks()
     {
         for (int x = 0; x < ActivePuzzleBlocks.GetLength(0); x += 1)
@@ -170,7 +179,7 @@ public class PuzzleManager : MonoBehaviour
                 desWorldPos,
                 currBlock.GetComponent<PuzzleStats>().PuzzleValue,
                 currBlock
-            );
+        );
         LeanTween.move(currBlock, desWorldPos, .07f).setOnComplete(() =>
         {
             callback?.Invoke();
@@ -179,15 +188,17 @@ public class PuzzleManager : MonoBehaviour
 
     public void MatchTo(Vector2 desWorldPos, Vector2 currWorldPos, GameObject currBlock, Action callback)
     {
+        var gridPos = gridWorld.ConvertWorldPosToGridPos(currWorldPos);
+        ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y] = null;
+        gridWorld.SetWorldPosValueAt(currWorldPos, 0);
+        SetPuzzleBlockValueAt(
+                desWorldPos,
+                gridWorld.GetWorldPosValueAt(desWorldPos) + 1,
+                GetPuzzleBlockAt(desWorldPos)
+        );
         LeanTween.move(currBlock, desWorldPos, .07f).setOnComplete(() =>
         {
-            RemovePuzzleBlockRendererAt(currWorldPos);
-            SetPuzzleBlockValueAt(currWorldPos, 0, null);
-            SetPuzzleBlockValueAt(
-                    desWorldPos,
-                    gridWorld.GetWorldPosValueAt(desWorldPos) + 1,
-                    GetPuzzleBlockAt(desWorldPos)
-                );
+            currBlock.GetComponent<PuzzleStats>().PoolDestroy();
             callback?.Invoke();
         });
     }
@@ -197,17 +208,6 @@ public class PuzzleManager : MonoBehaviour
         var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, gridWorld.Offset);
         if (gridWorld.IsGridPosOutsideAt(gridPos)) return;
         ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y] = block;
-    }
-
-    public void RemovePuzzleBlockRendererAt(Vector2 worldPos)
-    {
-        var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, gridWorld.Offset);
-        if (gridWorld.IsGridPosOutsideAt(gridPos)) return;
-
-        var puzzleBlock = ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y];
-        if (puzzleBlock == null) return;
-        if (puzzleBlock.activeSelf) puzzleBlockPool.Release(puzzleBlock);
-        ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y] = null;
     }
 
     public GameObject GetPuzzleBlockAt(Vector2 worldPos)
