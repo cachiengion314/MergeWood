@@ -26,13 +26,17 @@ public class UICanvas : MonoBehaviour
     public void PlayGame()
     {
         LevelManager.Instance.SetGameState(GameState.Gameplay);
-        gameMenuPanel.gameObject.SetActive(false);
     }
 
     private void LevelManager_onGameStateChanged(GameState state)
     {
         switch (state)
         {
+            case GameState.Gameplay:
+                gameMenuPanel.gameObject.SetActive(false);
+                gameOverPanel.gameObject.SetActive(false);
+                break;
+
             case GameState.Gameover:
                 gameOverPanel.gameObject.SetActive(true);
                 gameMenuPanel.gameObject.SetActive(false);

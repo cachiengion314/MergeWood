@@ -7,6 +7,7 @@ public class PuzzleManager : MonoBehaviour
     public static PuzzleManager Instance { get; private set; }
 
     [Header("Injected Dependencies")]
+    [Tooltip("gridWorld will be injected throught Instantiate method, not now.")]
     [SerializeField] GridWorld gridWorld;
     [SerializeField] GameObject puzzleBlock;
     public DragAndDrop CurrentBeingDragged;
@@ -195,7 +196,7 @@ public class PuzzleManager : MonoBehaviour
                 GetPuzzleBlockAt(desWorldPos)
         );
 
-        LeanTween.move(currBlock, desWorldPos, .2f).setOnComplete(() =>
+        LeanTween.move(currBlock, desWorldPos, .14f).setOnComplete(() =>
         {
             currBlock.GetComponent<PuzzleStats>().PoolDestroy();
             callback?.Invoke();

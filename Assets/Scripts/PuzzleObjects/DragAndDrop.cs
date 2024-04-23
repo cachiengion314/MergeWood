@@ -5,6 +5,7 @@ using System;
 public class DragAndDrop : MonoBehaviour
 {
     [Header("Injected Dependencies")]
+    [Tooltip("gridWorld will be injected via Instantiate method, not now.")]
     public GridWorld gridWorld;
     public Vector3 targetPosition;
 
@@ -68,18 +69,16 @@ public class DragAndDrop : MonoBehaviour
                         var nextPos = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
                         var nextDir = nextPos - (Vector2)transform.position;
 
-                        if (
-                             gridWorld.IsWorldDirObstructedAt(transform.position, nextDir)
-                             || gridWorld.IsWorldPosOutsideAt(nextPos)
-                         )
+                        if (gridWorld.IsDiagonalWorldDirObstructedAt(transform.position, nextDir))
+                            nextPos = transform.position;
+                        else if (
+                              gridWorld.IsWorldDirObstructedAt(transform.position, nextDir)
+                              || gridWorld.IsWorldPosOutsideAt(nextPos)
+                          )
                         {
-                            var val = gridWorld.GetWorldPosValueAt(
-                                nextPos
-                            );
-                            if (val > 0)
-                            {
-                                onDragCollided?.Invoke(nextPos);
-                            }
+                            var gridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
+                            var worldPos = gridWorld.ConvertGridPosToWorldPos(gridPos);
+                            onDragCollided?.Invoke(worldPos + nextDir.normalized);
                             nextPos = transform.position;
                         }
 

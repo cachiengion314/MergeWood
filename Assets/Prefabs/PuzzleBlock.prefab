@@ -264,9 +264,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c06688b7f23ec46b6ae5aab3a956850e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gridWorld: {fileID: 0}
   targetPosition: {x: 0, y: 0, z: 0}
-  snapToTargetValue: 1
-  locked: 0
   moveSpeed: 18
 --- !u!114 &2644034698311499243
 MonoBehaviour:
@@ -280,7 +279,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f791cfe2192854b75b36a82479416c3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PuzzleValue: 5
+  gridWorld: {fileID: 0}
+  smallHitFX: {fileID: 6202524737395084054, guid: 8600e7ed4015a48b58f94f10a8ba53b0, type: 3}
   valueText: {fileID: 8136076153811599780}
   dragAndDrop: {fileID: 1272584321781542286}
   LastLandingPos: {x: 0, y: 0}

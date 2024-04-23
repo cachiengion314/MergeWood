@@ -5,8 +5,10 @@ using UnityEngine.Pool;
 public class PuzzleStats : MonoBehaviour
 {
     [Header("Injected Dependencies")]
+    [Tooltip("gridWorld will be injected via Instantiate method, not now.")]
     public GridWorld gridWorld;
     public ObjectPool<GameObject> puzzleBlockPool;
+    [SerializeField] ParticleSystem smallHitFX;
     [SerializeField] TextMeshPro valueText;
     [SerializeField] DragAndDrop dragAndDrop;
 
@@ -102,11 +104,13 @@ public class PuzzleStats : MonoBehaviour
     public void PoolDestroy()
     {
         if (gameObject.activeSelf) puzzleBlockPool.Release(gameObject);
+        var fx = Instantiate(smallHitFX, transform.position, Quaternion.identity);
+        fx.Play();
     }
 
     void CheckRuleAt(Vector2 currPosition)
     {
-        var neighbors = gridWorld.FindNeighborBlockWorldPosAt(currPosition);
+        var neighbors = gridWorld.FindNeighborWorldPosAt(currPosition);
         foreach (var neighborPos in neighbors)
         {
             if (!MatchingRule.IsPassedDownBlock(currPosition, neighborPos)) continue;
