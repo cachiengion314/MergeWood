@@ -514,7 +514,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 6
+  orthographic size: 7
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -1226,7 +1226,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ef2ba4da84aa4dffad73c8a8d329ae8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridSize: {x: 5, y: 9}
+  gridSize: {x: 6, y: 9}
 --- !u!4 &991219896
 Transform:
   m_ObjectHideFlags: 0
@@ -1697,7 +1697,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridWorld: {fileID: 991219895}
-  StartPuzzleBlockAmount: 5
+  StartPuzzleBlockAmount: 6
   StartSpawnTime: 0.2
   IntervalSpawnTime: 4.51
   shouldStartSpawnTimer: 1

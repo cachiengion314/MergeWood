@@ -188,15 +188,14 @@ public class PuzzleManager : MonoBehaviour
 
     public void MatchTo(Vector2 desWorldPos, Vector2 currWorldPos, GameObject currBlock, Action callback)
     {
-        var gridPos = gridWorld.ConvertWorldPosToGridPos(currWorldPos);
-        ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y] = null;
-        gridWorld.SetWorldPosValueAt(currWorldPos, 0);
+        SetPuzzleBlockValueAt(currWorldPos, 0, null);
         SetPuzzleBlockValueAt(
                 desWorldPos,
                 gridWorld.GetWorldPosValueAt(desWorldPos) + 1,
                 GetPuzzleBlockAt(desWorldPos)
         );
-        LeanTween.move(currBlock, desWorldPos, .07f).setOnComplete(() =>
+
+        LeanTween.move(currBlock, desWorldPos, .2f).setOnComplete(() =>
         {
             currBlock.GetComponent<PuzzleStats>().PoolDestroy();
             callback?.Invoke();
