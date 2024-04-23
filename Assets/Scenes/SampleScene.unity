@@ -271,7 +271,7 @@ GameObject:
   - component: {fileID: 610754651}
   - component: {fileID: 610754650}
   m_Layer: 0
-  m_Name: SpawnPuzzleBlocks
+  m_Name: Managers
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -289,7 +289,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d5b5099ecfd04328b2fb01477f800b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  StartPuzzleBlockAmount: 17
+  StartPuzzleBlockAmount: 14
   puzzleBlock: {fileID: 3423673379139951537, guid: 60af40760a55d42e2aa06fd336a05998, type: 3}
   CurrentBeingDragged: {fileID: 0}
   randomRangePuzzleValue: {x: 1, y: 9}

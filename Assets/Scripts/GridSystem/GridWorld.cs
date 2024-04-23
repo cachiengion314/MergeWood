@@ -17,7 +17,9 @@ public class GridWorld : MonoBehaviour
 
     private void Update()
     {
+#if UNITY_EDITOR
         DrawGrid();
+#endif
     }
 
     void BakingGridWorld()
@@ -131,7 +133,7 @@ public class GridWorld : MonoBehaviour
     }
 
     /// <summary>
-    /// For debug only
+    /// only for debug
     /// </summary>
     void DrawGrid()
     {

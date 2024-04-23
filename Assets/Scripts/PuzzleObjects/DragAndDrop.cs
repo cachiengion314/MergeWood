@@ -5,6 +5,7 @@ using System;
 public class DragAndDrop : MonoBehaviour
 {
     [Header("Injected Dependencies")]
+    public GridWorld gridWorld;
     public Vector3 targetPosition;
 
     [Header("Components")]
@@ -31,8 +32,9 @@ public class DragAndDrop : MonoBehaviour
     void Update()
     {
         DragDropControl();
-
+#if UNITY_EDITOR
         DrawGrabedBlock();
+#endif
     }
 
     void DragDropControl()
@@ -49,7 +51,7 @@ public class DragAndDrop : MonoBehaviour
                     {
                         onDragBegan?.Invoke();
                         IsOnDrag = true;
-                        SpawnPuzzleBlocks.Instance.CurrentBeingDragged = this;
+                        PuzzleManager.Instance.CurrentBeingDragged = this;
 
                         deltaX = touchPos.x - transform.position.x;
                         deltaY = touchPos.y - transform.position.y;
@@ -57,14 +59,14 @@ public class DragAndDrop : MonoBehaviour
                     break;
 
                 case TouchPhase.Moved:
-                    if (this == SpawnPuzzleBlocks.Instance.CurrentBeingDragged)
+                    if (this == PuzzleManager.Instance.CurrentBeingDragged)
                     {
                         onDragMove?.Invoke();
                         var nextPos = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
                         var nextDir = nextPos - (Vector2)transform.position;
                         if (
-                            GridWorld.Instance.IsWorldDirObstructedAt(transform.position, nextDir)
-                            || GridWorld.Instance.IsWorldPosOutsideAt(nextPos)
+                            gridWorld.IsWorldDirObstructedAt(transform.position, nextDir)
+                            || gridWorld.IsWorldPosOutsideAt(nextPos)
                         )
                         {
                             nextPos = transform.position;
@@ -74,11 +76,11 @@ public class DragAndDrop : MonoBehaviour
                     break;
 
                 case TouchPhase.Ended:
-                    if (this == SpawnPuzzleBlocks.Instance.CurrentBeingDragged)
+                    if (this == PuzzleManager.Instance.CurrentBeingDragged)
                     {
                         onDragEnd?.Invoke();
                         IsOnDrag = false;
-                        SpawnPuzzleBlocks.Instance.CurrentBeingDragged = null;
+                        PuzzleManager.Instance.CurrentBeingDragged = null;
 
                         CalculateTargetPosition();
                         LeanTween.move(gameObject, targetPosition, .1f).setOnComplete(() =>
@@ -93,8 +95,8 @@ public class DragAndDrop : MonoBehaviour
 
     void CalculateTargetPosition()
     {
-        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.Offset);
-        Vector2 flooredWorldPos = GridWorld.Instance.FindFlooredWorldPosAt(gridPos);
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, gridWorld.Offset);
+        Vector2 flooredWorldPos = gridWorld.FindFlooredWorldPosAt(gridPos);
         targetPosition = new Vector3(flooredWorldPos.x, flooredWorldPos.y);
     }
 
@@ -104,8 +106,8 @@ public class DragAndDrop : MonoBehaviour
     void DrawGrabedBlock()
     {
         if (!IsOnDrag) return;
-        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, GridWorld.Instance.Offset);
-        Vector2 worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.Offset);
+        Vector2 gridPos = GridUtility.ConvertWorldPosToGridPos(transform.position, gridWorld.Offset);
+        Vector2 worldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, gridWorld.Offset);
         Utility.DrawQuad(worldPos, .5f, 2);
     }
 }

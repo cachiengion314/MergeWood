@@ -2,12 +2,12 @@ using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
-public class SpawnPuzzleBlocks : MonoBehaviour
+public class PuzzleManager : MonoBehaviour
 {
-    public static SpawnPuzzleBlocks Instance { get; private set; }
+    public static PuzzleManager Instance { get; private set; }
 
     [Header("Injected Dependencies")]
-    public int StartPuzzleBlockAmount;
+    [SerializeField] GridWorld gridWorld;
     [SerializeField] GameObject puzzleBlock;
     public DragAndDrop CurrentBeingDragged;
     public GameObject[,] ActivePuzzleBlocks;
@@ -24,8 +24,8 @@ public class SpawnPuzzleBlocks : MonoBehaviour
 
     private void Start()
     {
-        TotalPuzzleBlockAmount = GridWorld.Instance.Grid.GetLength(0) * GridWorld.Instance.Grid.GetLength(1);
-
+        TotalPuzzleBlockAmount
+            = gridWorld.Grid.GetLength(0) * gridWorld.Grid.GetLength(1);
         puzzleBlockPool = new ObjectPool<GameObject>(
             CreateBlockPoolObj,
             OnTakeObjFromPool,
@@ -33,24 +33,28 @@ public class SpawnPuzzleBlocks : MonoBehaviour
             OnDestroyPoolObj,
             true, TotalPuzzleBlockAmount, TotalPuzzleBlockAmount
         );
-
-        SpawnBlocks(StartPuzzleBlockAmount);
-        CheckDownBlocks();
+        ActivePuzzleBlocks
+            = new GameObject[gridWorld.Grid.GetLength(0), gridWorld.Grid.GetLength(1)];
     }
 
     private void Update()
     {
+#if UNITY_EDITOR
         DrawActivePuzzleBlocks();
         if (Input.GetKeyDown(KeyCode.Space))
         {
             MoveRowBlocksAt(1, Vector2.up);
         }
+#endif
     }
 
     private GameObject CreateBlockPoolObj()
     {
         GameObject _obj = Instantiate(puzzleBlock, transform.position, transform.rotation);
         _obj.GetComponent<PuzzleStats>().puzzleBlockPool = puzzleBlockPool;
+        _obj.GetComponent<DragAndDrop>().gridWorld = gridWorld;
+        _obj.GetComponent<PuzzleStats>().gridWorld = gridWorld;
+
         return _obj;
     }
 
@@ -69,26 +73,24 @@ public class SpawnPuzzleBlocks : MonoBehaviour
         Destroy(obj);
     }
 
-    void SpawnBlocks(int amount)
+    public void SpawnBlocks(int amount)
     {
-        ActivePuzzleBlocks = new GameObject[GridWorld.Instance.Grid.GetLength(0), GridWorld.Instance.Grid.GetLength(1)];
-
         for (int i = 0; i < amount; i++)
         {
-            int x = i % GridWorld.Instance.Grid.GetLength(0);
-            Vector2 highGridPos = new(x, GridWorld.Instance.Grid.GetLength(1) - 1);
-            Vector2 flooredGridPos = GridWorld.Instance.FindFlooredGridPosAt(highGridPos);
+            int x = i % gridWorld.Grid.GetLength(0);
+            Vector2 highGridPos = new(x, gridWorld.Grid.GetLength(1) - 1);
+            Vector2 flooredGridPos = gridWorld.FindFlooredGridPosAt(highGridPos);
             if (flooredGridPos.x < 0) continue;
 
             var puzzleBlockClone = puzzleBlockPool.Get();
             int _puzzleValue = UnityEngine.Random.Range(randomRangePuzzleValue.x, randomRangePuzzleValue.y);
 
-            Vector2 flooredWorldPos = GridUtility.ConvertGridPosToWorldPos(flooredGridPos, GridWorld.Instance.Offset);
+            Vector2 flooredWorldPos = GridUtility.ConvertGridPosToWorldPos(flooredGridPos, gridWorld.Offset);
             puzzleBlockClone.transform.position = flooredWorldPos;
             puzzleBlockClone.GetComponent<PuzzleStats>().PuzzleValue = _puzzleValue;
             puzzleBlockClone.GetComponent<PuzzleStats>().LastLandingPos = flooredWorldPos;
 
-            GridWorld.Instance.SetGridPosValueAt(flooredGridPos, _puzzleValue);
+            gridWorld.SetGridPosValueAt(flooredGridPos, _puzzleValue);
 
             ActivePuzzleBlocks[(int)flooredGridPos.x, (int)flooredGridPos.y] = puzzleBlockClone;
         }
@@ -110,8 +112,8 @@ public class SpawnPuzzleBlocks : MonoBehaviour
                 if (currBlock == null) continue;
 
                 var desGridPos = gridPos + moveDir;
-                var currWorldPos = GridWorld.Instance.ConvertGridPosToWorldPos(gridPos);
-                var desWorldPos = GridWorld.Instance.ConvertGridPosToWorldPos(desGridPos);
+                var currWorldPos = gridWorld.ConvertGridPosToWorldPos(gridPos);
+                var desWorldPos = gridWorld.ConvertGridPosToWorldPos(desGridPos);
                 MoveTo(desWorldPos, currWorldPos, currBlock, () => { });
             }
         }
@@ -127,16 +129,16 @@ public class SpawnPuzzleBlocks : MonoBehaviour
                 if (currBlock == null) continue;
 
                 var gridPos = new Vector2(x, y);
-                var currWorldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, GridWorld.Instance.Offset);
+                var currWorldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, gridWorld.Offset);
 
                 var downPos1 = currWorldPos + Vector2.down;
                 // check empty space
-                if (GridWorld.Instance.GetWorldPosValueAt(downPos1) == 0)
+                if (gridWorld.GetWorldPosValueAt(downPos1) == 0)
                 {
                     var downPos2 = currWorldPos + Vector2.down * 2;
                     if (
-                        GridWorld.Instance.GetWorldPosValueAt(currWorldPos) ==
-                        GridWorld.Instance.GetWorldPosValueAt(downPos2)
+                        gridWorld.GetWorldPosValueAt(currWorldPos) ==
+                        gridWorld.GetWorldPosValueAt(downPos2)
                     )
                     {
                         // Passed matching rule at down postion2
@@ -149,8 +151,8 @@ public class SpawnPuzzleBlocks : MonoBehaviour
                 }
                 // check occupied space
                 if (
-                    GridWorld.Instance.GetWorldPosValueAt(downPos1) ==
-                    GridWorld.Instance.GetWorldPosValueAt(currWorldPos)
+                    gridWorld.GetWorldPosValueAt(downPos1) ==
+                    gridWorld.GetWorldPosValueAt(currWorldPos)
                 )
                 {
                     // Passed matching rule at down postion1
@@ -163,14 +165,14 @@ public class SpawnPuzzleBlocks : MonoBehaviour
 
     public void MoveTo(Vector2 desWorldPos, Vector2 currWorldPos, GameObject currBlock, Action callback)
     {
+        SetPuzzleBlockValueAt(currWorldPos, 0, null);
+        SetPuzzleBlockValueAt(
+                desWorldPos,
+                currBlock.GetComponent<PuzzleStats>().PuzzleValue,
+                currBlock
+            );
         LeanTween.move(currBlock, desWorldPos, .07f).setOnComplete(() =>
         {
-            SetPuzzleBlockValueAt(currWorldPos, 0, null);
-            SetPuzzleBlockValueAt(
-                    desWorldPos,
-                    currBlock.GetComponent<PuzzleStats>().PuzzleValue,
-                    currBlock
-                );
             callback?.Invoke();
         });
     }
@@ -183,7 +185,7 @@ public class SpawnPuzzleBlocks : MonoBehaviour
             SetPuzzleBlockValueAt(currWorldPos, 0, null);
             SetPuzzleBlockValueAt(
                     desWorldPos,
-                    GridWorld.Instance.GetWorldPosValueAt(desWorldPos) + 1,
+                    gridWorld.GetWorldPosValueAt(desWorldPos) + 1,
                     GetPuzzleBlockAt(desWorldPos)
                 );
             callback?.Invoke();
@@ -192,15 +194,15 @@ public class SpawnPuzzleBlocks : MonoBehaviour
 
     public void SetPuzzleBlockOccupiedAt(Vector2 worldPos, GameObject block)
     {
-        var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, GridWorld.Instance.Offset);
-        if (GridWorld.Instance.IsGridPosOutsideAt(gridPos)) return;
+        var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, gridWorld.Offset);
+        if (gridWorld.IsGridPosOutsideAt(gridPos)) return;
         ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y] = block;
     }
 
     public void RemovePuzzleBlockRendererAt(Vector2 worldPos)
     {
-        var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, GridWorld.Instance.Offset);
-        if (GridWorld.Instance.IsGridPosOutsideAt(gridPos)) return;
+        var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, gridWorld.Offset);
+        if (gridWorld.IsGridPosOutsideAt(gridPos)) return;
 
         var puzzleBlock = ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y];
         if (puzzleBlock == null) return;
@@ -210,24 +212,24 @@ public class SpawnPuzzleBlocks : MonoBehaviour
 
     public GameObject GetPuzzleBlockAt(Vector2 worldPos)
     {
-        var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, GridWorld.Instance.Offset);
+        var gridPos = GridUtility.ConvertWorldPosToGridPos(worldPos, gridWorld.Offset);
         return GetPuzzleBlockIn(gridPos);
     }
 
     GameObject GetPuzzleBlockIn(Vector2 gridPos)
     {
-        if (GridWorld.Instance.IsGridPosOutsideAt(gridPos)) return null;
+        if (gridWorld.IsGridPosOutsideAt(gridPos)) return null;
         return ActivePuzzleBlocks[(int)gridPos.x, (int)gridPos.y];
     }
 
     /// <summary>
-    /// Sync position value between GridWorld.Grid and SpawnPuzzleBlocks.ActivePuzzleBlocks
+    /// Sync position value between GridWorld.Grid and PuzzleManager.ActivePuzzleBlocks
     /// </summary>
     /// <param name="desWorldPos"></param>
     /// <param name="lastWorldPos"></param>
     public void SetPuzzleBlockValueAt(Vector2 desWorldPos, int value, GameObject block)
     {
-        GridWorld.Instance.SetWorldPosValueAt(desWorldPos, value);
+        gridWorld.SetWorldPosValueAt(desWorldPos, value);
         SetPuzzleBlockOccupiedAt(desWorldPos, block);
 
         if (block)
@@ -238,7 +240,7 @@ public class SpawnPuzzleBlocks : MonoBehaviour
     }
 
     /// <summary>
-    /// For debug only
+    /// only for debug
     /// </summary>
     void DrawActivePuzzleBlocks()
     {
@@ -248,7 +250,7 @@ public class SpawnPuzzleBlocks : MonoBehaviour
             {
                 Vector2 pos = GridUtility.ConvertGridPosToWorldPos(
                     new Vector2Int(x, y) + new Vector2(ActivePuzzleBlocks.GetLength(0), 0),
-                    GridWorld.Instance.Offset
+                    gridWorld.Offset
                 );
 
                 Utility.DrawQuad(pos, 1, 0);

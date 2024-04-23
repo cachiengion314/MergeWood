@@ -5,6 +5,7 @@ using UnityEngine.Pool;
 public class PuzzleStats : MonoBehaviour
 {
     [Header("Injected Dependencies")]
+    public GridWorld gridWorld;
     public ObjectPool<GameObject> puzzleBlockPool;
     [SerializeField] TextMeshPro valueText;
     [SerializeField] DragAndDrop dragAndDrop;
@@ -48,7 +49,7 @@ public class PuzzleStats : MonoBehaviour
 
     private void DragAndDrop_onDragBegan()
     {
-        SpawnPuzzleBlocks.Instance.SetPuzzleBlockValueAt(LastLandingPos, 0, null);
+        PuzzleManager.Instance.SetPuzzleBlockValueAt(LastLandingPos, 0, null);
     }
 
     private void DragAndDrop_onDragMove()
@@ -58,7 +59,7 @@ public class PuzzleStats : MonoBehaviour
 
     private void DragAndDrop_onDroppedToFloor(Vector2 targetPosition)
     {
-        SpawnPuzzleBlocks.Instance.SetPuzzleBlockValueAt(targetPosition, puzzleValue, gameObject);
+        PuzzleManager.Instance.SetPuzzleBlockValueAt(targetPosition, puzzleValue, gameObject);
         CheckRuleAt(targetPosition);
 
         isDetectChangingGridPos = false;
@@ -70,16 +71,16 @@ public class PuzzleStats : MonoBehaviour
         if (isDetectChangingGridPos) return;
 
         Vector2 currGridPos = GridUtility.ConvertWorldPosToGridPos(
-            transform.position, GridWorld.Instance.Offset
+            transform.position, gridWorld.Offset
         );
         Vector2 currWorldPos = GridUtility.ConvertGridPosToWorldPos(
-            currGridPos, GridWorld.Instance.Offset
+            currGridPos, gridWorld.Offset
         );
         if (!currWorldPos.Equals(LastLandingPos))
         {
             isDetectChangingGridPos = true;
 
-            SpawnPuzzleBlocks.Instance.CheckDownBlocks();
+            PuzzleManager.Instance.CheckDownBlocks();
         }
     }
 
@@ -93,14 +94,14 @@ public class PuzzleStats : MonoBehaviour
 
     void CheckRuleAt(Vector2 currPosition)
     {
-        var neighbors = GridWorld.Instance.FindNeighborBlockWorldPosAt(currPosition);
+        var neighbors = gridWorld.FindNeighborBlockWorldPosAt(currPosition);
         foreach (var neighborPos in neighbors)
         {
             if (!MatchingRule.IsPassedDownBlock(currPosition, neighborPos)) continue;
-            if (GridWorld.Instance.GetWorldPosValueAt(neighborPos) != puzzleValue) continue;
+            if (gridWorld.GetWorldPosValueAt(neighborPos) != puzzleValue) continue;
             // Passed matching rule
-            SpawnPuzzleBlocks.Instance.MatchTo(
-                neighborPos, currPosition, gameObject, SpawnPuzzleBlocks.Instance.CheckDownBlocks
+            PuzzleManager.Instance.MatchTo(
+                neighborPos, currPosition, gameObject, PuzzleManager.Instance.CheckDownBlocks
             );
             return;
         }
