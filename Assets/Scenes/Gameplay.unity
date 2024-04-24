@@ -2169,9 +2169,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gridWorld: {fileID: 991219895}
-  StartPuzzleBlockAmount: 5
+  StartPuzzleBlockAmount: 6
   StartSpawnTime: 0.2
-  IntervalSpawnTime: 4.51
+  IntervalSpawnTime: 5
   shouldStartSpawnTimer: 1
   shouldIntervalSpawnTimer: 1
 --- !u!4 &2066651705
