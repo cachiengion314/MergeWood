@@ -63,13 +63,13 @@ public class PuzzleStats : MonoBehaviour
         var currBlock = PuzzleManager.Instance.CurrentBeingDragged;
         var currBlockPuzzleStats = currBlock.GetComponent<PuzzleStats>();
 
-        var collidedBlockValue = gridWorld.GetWorldPosValueAt(inputPos);
+        var collidedBlockValue = gridWorld.GetValueAt(inputPos);
         if (currBlockPuzzleStats.PuzzleValue != collidedBlockValue) return;
 
         currBlockPuzzleStats.PoolDestroy();
         PuzzleManager.Instance.SetPuzzleBlockValueAt(
                 inputPos,
-                gridWorld.GetWorldPosValueAt(inputPos) + 1,
+                gridWorld.GetValueAt(inputPos) + 1,
                 PuzzleManager.Instance.GetPuzzleBlockAt(inputPos)
         );
         PuzzleManager.Instance.CurrentBeingDragged = null;
@@ -112,11 +112,11 @@ public class PuzzleStats : MonoBehaviour
 
     void CheckRuleAt(Vector2 currPosition)
     {
-        var neighbors = gridWorld.FindNeighborWorldPosAt(currPosition);
+        var neighbors = gridWorld.FindNeighborPosAt(currPosition);
         foreach (var neighborPos in neighbors)
         {
             if (!MatchingRule.IsPassedDownBlock(currPosition, neighborPos)) continue;
-            if (gridWorld.GetWorldPosValueAt(neighborPos) != puzzleValue) continue;
+            if (gridWorld.GetValueAt(neighborPos) != puzzleValue) continue;
             // Passed matching rule
             PuzzleManager.Instance.MatchTo(
                 neighborPos, currPosition, gameObject, PuzzleManager.Instance.CheckDownBlocks

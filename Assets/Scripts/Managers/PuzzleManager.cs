@@ -82,10 +82,16 @@ public class PuzzleManager : MonoBehaviour
             Vector2 flooredGridPos = gridWorld.FindFlooredGridPosAt(highGridPos);
             if (flooredGridPos.x < 0) continue;
 
+            Vector2 flooredWorldPos = GridUtility.ConvertGridPosToWorldPos(flooredGridPos, gridWorld.Offset);
+
             var puzzleBlockClone = puzzleBlockPool.Get();
             int _puzzleValue = UnityEngine.Random.Range(randomRangePuzzleValue.x, randomRangePuzzleValue.y);
+            int _upPuzzleValue = gridWorld.GetValueAt(flooredWorldPos + Vector2.up);
+            while (_puzzleValue == _upPuzzleValue)
+            {
+                _puzzleValue = UnityEngine.Random.Range(randomRangePuzzleValue.x, randomRangePuzzleValue.y);
+            }
 
-            Vector2 flooredWorldPos = GridUtility.ConvertGridPosToWorldPos(flooredGridPos, gridWorld.Offset);
             puzzleBlockClone.transform.position = flooredWorldPos;
             puzzleBlockClone.GetComponent<PuzzleStats>().PuzzleValue = _puzzleValue;
             puzzleBlockClone.GetComponent<PuzzleStats>().LastLandingPos = flooredWorldPos;
@@ -155,12 +161,12 @@ public class PuzzleManager : MonoBehaviour
 
                 var downPos1 = currWorldPos + Vector2.down;
                 // check empty space
-                if (gridWorld.GetWorldPosValueAt(downPos1) == 0)
+                if (gridWorld.GetValueAt(downPos1) == 0)
                 {
                     var downPos2 = currWorldPos + Vector2.down * 2;
                     if (
-                        gridWorld.GetWorldPosValueAt(currWorldPos) ==
-                        gridWorld.GetWorldPosValueAt(downPos2)
+                        gridWorld.GetValueAt(currWorldPos) ==
+                        gridWorld.GetValueAt(downPos2)
                     )
                     {
                         // Passed matching rule at down postion2
@@ -173,8 +179,8 @@ public class PuzzleManager : MonoBehaviour
                 }
                 // check occupied space
                 if (
-                    gridWorld.GetWorldPosValueAt(downPos1) ==
-                    gridWorld.GetWorldPosValueAt(currWorldPos)
+                    gridWorld.GetValueAt(downPos1) ==
+                    gridWorld.GetValueAt(currWorldPos)
                 )
                 {
                     // Passed matching rule at down postion1
@@ -204,7 +210,7 @@ public class PuzzleManager : MonoBehaviour
         SetPuzzleBlockValueAt(currWorldPos, 0, null);
         SetPuzzleBlockValueAt(
                 desWorldPos,
-                gridWorld.GetWorldPosValueAt(desWorldPos) + 1,
+                gridWorld.GetValueAt(desWorldPos) + 1,
                 GetPuzzleBlockAt(desWorldPos)
         );
 
@@ -241,7 +247,7 @@ public class PuzzleManager : MonoBehaviour
     /// <param name="lastWorldPos"></param>
     public void SetPuzzleBlockValueAt(Vector2 desWorldPos, int value, GameObject block)
     {
-        gridWorld.SetWorldPosValueAt(desWorldPos, value);
+        gridWorld.SetValueAt(desWorldPos, value);
         SetPuzzleBlockOccupiedAt(desWorldPos, block);
 
         if (block)

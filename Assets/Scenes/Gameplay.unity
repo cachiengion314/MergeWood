@@ -479,7 +479,7 @@ GameObject:
   - component: {fileID: 503238487}
   - component: {fileID: 503238486}
   m_Layer: 0
-  m_Name: khung
+  m_Name: GameplayBoard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1811,7 +1811,7 @@ GameObject:
   - component: {fileID: 1837846967}
   - component: {fileID: 1837846966}
   m_Layer: 0
-  m_Name: merge_wood_bg
+  m_Name: GameplayBg
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

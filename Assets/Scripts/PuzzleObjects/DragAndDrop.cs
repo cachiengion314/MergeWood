@@ -69,11 +69,11 @@ public class DragAndDrop : MonoBehaviour
                         var nextPos = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
                         var nextDir = nextPos - (Vector2)transform.position;
 
-                        if (gridWorld.IsDiagonalWorldDirObstructedAt(transform.position, nextDir))
+                        if (gridWorld.IsDiagonalDirectionObstructedAt(transform.position, nextDir))
                             nextPos = transform.position;
                         else if (
-                              gridWorld.IsWorldDirObstructedAt(transform.position, nextDir)
-                              || gridWorld.IsWorldPosOutsideAt(nextPos)
+                              gridWorld.IsDirectionObstructedAt(transform.position, nextDir)
+                              || gridWorld.IsPosOutsideAt(nextPos)
                           )
                         {
                             var gridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
@@ -108,7 +108,7 @@ public class DragAndDrop : MonoBehaviour
     void CalculateTargetPosition()
     {
         Vector2 gridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
-        Vector2 flooredWorldPos = gridWorld.FindFlooredWorldPosAt(gridPos);
+        Vector2 flooredWorldPos = gridWorld.FindFlooredPosAt(gridPos);
         targetPosition = new Vector3(flooredWorldPos.x, flooredWorldPos.y);
     }
 
