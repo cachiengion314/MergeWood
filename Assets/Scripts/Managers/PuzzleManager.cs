@@ -9,12 +9,15 @@ public class PuzzleManager : MonoBehaviour
     [Header("Injected Dependencies")]
     [Tooltip("gridWorld will be injected throught Instantiate method, not now.")]
     [SerializeField] GridWorld gridWorld;
+    [SerializeField] PuzzleData[] puzzleDataSet;
     [SerializeField] GameObject puzzleBlock;
     public DragAndDrop CurrentBeingDragged;
     public GameObject[,] ActivePuzzleBlocks;
     private ObjectPool<GameObject> puzzleBlockPool;
     public Vector2Int randomRangePuzzleValue;
 
+    [Header("Settings")]
+    public int currentPuzzleThemeIndex;
     // Settting
     public int TotalPuzzleBlockAmount { get; private set; }
 
@@ -91,6 +94,15 @@ public class PuzzleManager : MonoBehaviour
 
             ActivePuzzleBlocks[(int)flooredGridPos.x, (int)flooredGridPos.y] = puzzleBlockClone;
         }
+    }
+
+    public Sprite GetSpriteBaseOn(int puzzleValue)
+    {
+        if (puzzleValue - 1 >= puzzleDataSet[currentPuzzleThemeIndex].renderers.Length)
+        {
+            return puzzleDataSet[currentPuzzleThemeIndex].renderers[0];
+        }
+        return puzzleDataSet[currentPuzzleThemeIndex].renderers[puzzleValue - 1];
     }
 
     /// <summary>

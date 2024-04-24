@@ -29,6 +29,7 @@ public class LevelManager : MonoBehaviour
     public bool shouldIntervalSpawnTimer = true;
     float intervalSpawnTimer;
     float startSpawnTimer;
+    bool isCheckGameOver;
 
     private void Awake()
     {
@@ -64,12 +65,19 @@ public class LevelManager : MonoBehaviour
     public void CheckGameOver()
     {
         if (_gameState == GameState.Gameover) return;
+        if (isCheckGameOver) return;
+
         if (PuzzleManager.Instance.IsHighestRowHasPuzzle())
         {
-            _gameState = GameState.Gameover;
-            LeanTween.delayedCall(IntervalSpawnTime, () =>
+            isCheckGameOver = true;
+            LeanTween.delayedCall(IntervalSpawnTime - .1f, () =>
             {
-                SetGameState(GameState.Gameover);
+                if (PuzzleManager.Instance.IsHighestRowHasPuzzle())
+                {
+                    SetGameState(GameState.Gameover);
+                    return;
+                }
+                isCheckGameOver = false;
             });
         }
     }

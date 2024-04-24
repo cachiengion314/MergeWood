@@ -22,6 +22,8 @@ public class PuzzleStats : MonoBehaviour
         set
         {
             valueText.text = value.ToString();
+            var sprite = PuzzleManager.Instance.GetSpriteBaseOn(value);
+            GetComponentInChildren<SpriteRenderer>().sprite = sprite;
             puzzleValue = value;
         }
     }
