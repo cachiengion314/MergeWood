@@ -136,7 +136,8 @@ public class PuzzleManager : MonoBehaviour
 
     public bool IsHighestRowHasPuzzle()
     {
-        var lastRow = ActivePuzzleBlocks.GetLength(1) - 1;
+        // we minus 2 since the last row actually doesn't show in the screen
+        var lastRow = ActivePuzzleBlocks.GetLength(1) - 2;
         for (int x = 0; x < ActivePuzzleBlocks.GetLength(0); x += 1)
         {
             var currBlock = ActivePuzzleBlocks[x, lastRow];

@@ -69,20 +69,27 @@ public class DragAndDrop : MonoBehaviour
                         var nextPos = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
                         var nextDir = nextPos - (Vector2)transform.position;
 
+#if UNITY_EDITOR
+                        Utility.DrawRay(transform.position, (Vector3)nextDir, 1);
+#endif
+
                         if (gridWorld.IsDiagonalDirectionObstructedAt(transform.position, nextDir))
-                            nextPos = transform.position;
+                        {
+                            nextDir *= 0f;
+                        }
                         else if (
                               gridWorld.IsDirectionObstructedAt(transform.position, nextDir)
-                              || gridWorld.IsPosOutsideAt(nextPos)
+                              || gridWorld.IsPosOutsideAt(transform.position)
                           )
                         {
                             var gridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
                             var worldPos = gridWorld.ConvertGridPosToWorldPos(gridPos);
                             onDragCollided?.Invoke(worldPos + nextDir.normalized);
-                            nextPos = transform.position;
+
+                            nextDir *= 0f;
                         }
 
-                        transform.position = nextPos;
+                        transform.position += 100 * Time.deltaTime * (Vector3)nextDir;
                     }
                     break;
 

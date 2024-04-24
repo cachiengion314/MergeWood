@@ -105,10 +105,7 @@ public class GridWorld : MonoBehaviour
     public bool IsDirectionObstructedAt(Vector2 worldPos, Vector2 worldDir)
     {
         var gridPos = ConvertWorldPosToGridPos(worldPos);
-        var desWorldPos = worldPos + worldDir;
-        var desGridPos = ConvertWorldPosToGridPos(desWorldPos);
-        var gridDir = desGridPos - gridPos;
-        return IsGridDirObstructedAt(gridPos, gridDir);
+        return IsGridDirObstructedAt(gridPos, worldDir);
     }
 
     public bool IsGridDirObstructedAt(Vector2 gridPos, Vector2 gridDir)
@@ -116,9 +113,7 @@ public class GridWorld : MonoBehaviour
         if (IsGridPosOutsideAt(gridPos)) return true;
 
         var nextGridPos = gridPos + gridDir.normalized;
-        // Utility.Print("gridDir " + gridDir);
-        // Utility.Print("gridDir.normalized " + gridDir.normalized);
-        // Utility.Print("nextGridPos " + nextGridPos);
+
         if (IsGridPosOccupiedAt(nextGridPos)) return true;
 
         return false;
@@ -232,6 +227,7 @@ public class GridWorld : MonoBehaviour
         foreach (var dir in splitDirections)
         {
             var nextGridPos = gridPos + dir;
+
             if (IsGridPosOccupiedAt(nextGridPos))
             {
                 count++;
