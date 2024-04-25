@@ -150,6 +150,7 @@ public class PuzzleManager : MonoBehaviour
 
     public void CheckDownBlocks()
     {
+        Utility.Print("CheckDownBlocks");
         for (int x = 0; x < ActivePuzzleBlocks.GetLength(0); x += 1)
         {
             for (int y = 0; y < ActivePuzzleBlocks.GetLength(1); y += 1)

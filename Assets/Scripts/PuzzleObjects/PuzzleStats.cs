@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -32,15 +33,17 @@ public class PuzzleStats : MonoBehaviour
     {
         dragAndDrop.onDroppedToFloor += DragAndDrop_onDroppedToFloor;
         dragAndDrop.onDragBegan += DragAndDrop_onDragBegan;
+        dragAndDrop.onDragMove += DragAndDrop_onDragMove;
         dragAndDrop.onDragCollided += DragAndDrop_onDragCollided;
+        dragAndDrop.onDragEnd += DragAndDrop_onDragEnd;
 
         valueText.text = puzzleValue.ToString();
     }
 
+
+
     private void Update()
     {
-        DetectChangingGridPos();
-
 #if UNITY_EDITOR
         Utility.DrawQuad(LastLandingPos, .5f, 0);
 #endif
@@ -50,12 +53,18 @@ public class PuzzleStats : MonoBehaviour
     {
         dragAndDrop.onDroppedToFloor -= DragAndDrop_onDroppedToFloor;
         dragAndDrop.onDragBegan -= DragAndDrop_onDragBegan;
+        dragAndDrop.onDragMove -= DragAndDrop_onDragMove;
         dragAndDrop.onDragCollided -= DragAndDrop_onDragCollided;
     }
 
     private void DragAndDrop_onDragBegan()
     {
         PuzzleManager.Instance.SetPuzzleBlockValueAt(LastLandingPos, 0, null);
+    }
+
+    private void DragAndDrop_onDragMove()
+    {
+        DetectChangingGridPos();
     }
 
     private void DragAndDrop_onDragCollided(Vector2 inputPos)
@@ -93,17 +102,22 @@ public class PuzzleStats : MonoBehaviour
         isDetectChangingGridPos = false;
     }
 
+    private void DragAndDrop_onDragEnd()
+    {
+        isDetectChangingGridPos = false;
+    }
+
     void DetectChangingGridPos()
     {
-        if (!dragAndDrop.IsOnDrag) return;
         if (isDetectChangingGridPos) return;
 
         Vector2 currGridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
         Vector2 currWorldPos = gridWorld.ConvertGridPosToWorldPos(currGridPos);
         if (!currWorldPos.Equals(LastLandingPos))
         {
+            if (this != PuzzleManager.Instance.CurrentBeingDragged.GetComponent<PuzzleStats>())
+                return;
             isDetectChangingGridPos = true;
-
             PuzzleManager.Instance.CheckDownBlocks();
         }
     }

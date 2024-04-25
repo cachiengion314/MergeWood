@@ -96,7 +96,7 @@ public class DragAndDrop : MonoBehaviour
                             if (currBlockPuzzleStats.PuzzleValue == collidedBlockValue)
                             {
                                 // if (frontPos.Equals(worldPos))
-                                    onDragCollided?.Invoke(frontPos);
+                                onDragCollided?.Invoke(frontPos);
                             }
                             else
                                 nextPos = transform.position;
@@ -107,9 +107,9 @@ public class DragAndDrop : MonoBehaviour
                     break;
 
                 case TouchPhase.Ended:
+                    onDragEnd?.Invoke();
                     if (this == PuzzleManager.Instance.CurrentBeingDragged)
                     {
-                        onDragEnd?.Invoke();
                         IsOnDrag = false;
                         PuzzleManager.Instance.CurrentBeingDragged = null;
 
