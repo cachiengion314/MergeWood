@@ -7,9 +7,6 @@ public class GridWorld : MonoBehaviour
     public int[,] Grid { get; private set; }
     public Vector2 Offset { get; private set; }
     readonly Vector2[] directions = { Vector2.down, Vector2.left, Vector2.up, Vector2.right };
-    readonly Vector2[] diagonalDirections = {
-        new(-1, -1), new(-1, 1), new(1, 1), new(1, -1)
-        };
 
     private void Awake()
     {
@@ -39,7 +36,10 @@ public class GridWorld : MonoBehaviour
 
     public Vector2 ConvertGridPosToWorldPos(Vector2 gridPos)
     {
-        if (IsGridPosOutsideAt(gridPos)) return new Vector2(-1, -1);
+        var defaulPos = FindFlooredGridPosAt(gridPos);
+        if (defaulPos.x < 0) defaulPos.x = 0;
+        if (defaulPos.x > 0) defaulPos.x = Grid.GetLength(0) - 1;
+        if (IsGridPosOutsideAt(gridPos)) return defaulPos;
 
         return new Vector2(gridPos.x, gridPos.y) - Offset;
     }
@@ -49,7 +49,11 @@ public class GridWorld : MonoBehaviour
         int xRound = Mathf.RoundToInt(worldPos.x + Offset.x);
         int yRound = Mathf.RoundToInt(worldPos.y + Offset.y);
         var gridPos = new Vector2(xRound, yRound);
-        if (IsGridPosOutsideAt(gridPos)) return new Vector2(-1, -1);
+
+        var defaulPos = FindFlooredGridPosAt(gridPos);
+        if (defaulPos.x < 0) defaulPos.x = 0;
+        if (defaulPos.x > 0) defaulPos.x = Grid.GetLength(0) - 1;
+        if (IsGridPosOutsideAt(gridPos)) return defaulPos;
 
         return gridPos;
     }
@@ -160,25 +164,42 @@ public class GridWorld : MonoBehaviour
     public Vector2 FindFlooredPosAt(Vector2 worldPos)
     {
         Vector2 flooredGridPos = FindFlooredGridPosAt(worldPos);
-        if (flooredGridPos.x < 0) return new Vector2(-1, -1);
-
-        Vector2 flooredWorldPos = GridUtility.ConvertGridPosToWorldPos(flooredGridPos, Offset);
+        Vector2 flooredWorldPos = ConvertGridPosToWorldPos(flooredGridPos);
         return flooredWorldPos;
     }
 
     public Vector2 FindFlooredGridPosAt(Vector2 gridPos)
     {
-        if (IsGridPosOutsideAt(gridPos)) return new Vector2(-1, -1);
-
         int flooredY = 0;
-        int roudedX = Mathf.RoundToInt(gridPos.x);
-        while (Grid[roudedX, flooredY] > 0)
+        int roundedX = Mathf.RoundToInt(gridPos.x);
+        if (roundedX < 0) roundedX = 0;
+        if (roundedX > Grid.GetLength(0) - 1) roundedX = Grid.GetLength(0) - 1;
+
+        while (Grid[roundedX, flooredY] > 0)
         {
             flooredY++;
+            if (flooredY > Grid.GetLength(1) - 1)
+            {
+                flooredY = Grid.GetLength(1) - 1;
+                break;
+            }
         }
-        var flooredGridPos = new Vector2(roudedX, flooredY);
+        var flooredGridPos = new Vector2(roundedX, flooredY);
 
-        if (IsGridPosOccupiedAt(flooredGridPos)) return new Vector2(-1, -1);
+        if (IsGridPosOccupiedAt(flooredGridPos))
+        {
+            for (int x = 0; x < Grid.GetLength(0); ++x)
+            {
+                for (int y = 0; y < Grid.GetLength(0); ++y)
+                {
+                    if (Grid[x, y] == 0)
+                    {
+                        return new Vector2(x, y);
+                    }
+                }
+            }
+            return new Vector2(-1, -1);
+        };
         return flooredGridPos;
     }
 

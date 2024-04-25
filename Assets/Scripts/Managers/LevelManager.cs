@@ -103,7 +103,11 @@ public class LevelManager : MonoBehaviour
             intervalSpawnTimer = IntervalSpawnTime;
             return;
         };
-        if (PuzzleManager.Instance.CurrentBeingDragged) return;
+        if (PuzzleManager.Instance.CurrentBeingDragged || PuzzleManager.Instance.IsTweening) return;
+
+#if UNITY_EDITOR
+        Utility.Print("intervalSpawnTimer " + intervalSpawnTimer);
+#endif
 
         intervalSpawnTimer -= Time.deltaTime;
         if (intervalSpawnTimer <= 0)

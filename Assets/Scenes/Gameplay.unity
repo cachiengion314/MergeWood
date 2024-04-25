@@ -546,7 +546,7 @@ Transform:
   m_GameObject: {fileID: 503238485}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.42, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -725,6 +725,7 @@ MonoBehaviour:
   CurrentBeingDragged: {fileID: 0}
   randomRangePuzzleValue: {x: 1, y: 7}
   currentPuzzleThemeIndex: 0
+  TweenSlowFactor: 1
 --- !u!4 &610754651
 Transform:
   m_ObjectHideFlags: 0
@@ -1492,7 +1493,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ef2ba4da84aa4dffad73c8a8d329ae8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridSize: {x: 6, y: 10}
+  gridSize: {x: 6, y: 9}
 --- !u!4 &991219896
 Transform:
   m_ObjectHideFlags: 0

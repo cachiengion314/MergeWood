@@ -80,6 +80,14 @@ public class PuzzleStats : MonoBehaviour
     private void DragAndDrop_onDroppedToFloor(Vector2 targetPosition)
     {
         PuzzleManager.Instance.SetPuzzleBlockValueAt(targetPosition, puzzleValue, gameObject);
+
+        PuzzleManager.Instance.IsTweening = true;
+        LeanTween
+            .move(gameObject, targetPosition, .1f * PuzzleManager.Instance.TweenSlowFactor)
+            .setOnComplete(() =>
+        {
+            PuzzleManager.Instance.IsTweening = false;
+        });
         CheckRuleAt(targetPosition);
 
         isDetectChangingGridPos = false;

@@ -42,6 +42,7 @@ public class DragAndDrop : MonoBehaviour
     void DragDropControl()
     {
         if (LevelManager.Instance.GetGameState() != GameState.Gameplay) return;
+        if (PuzzleManager.Instance.IsTweening) return;
 
         if (Input.touchCount > 0)
         {
@@ -75,21 +76,33 @@ public class DragAndDrop : MonoBehaviour
 
                         if (gridWorld.IsDiagonalDirectionObstructedAt(transform.position, nextDir))
                         {
-                            nextDir *= 0f;
+                            nextPos = transform.position;
                         }
-                        else if (
-                              gridWorld.IsDirectionObstructedAt(transform.position, nextDir)
-                              || gridWorld.IsPosOutsideAt(transform.position)
-                          )
+                        if (gridWorld.IsPosOutsideAt(transform.position))
+                        {
+                            nextPos = transform.position;
+                        }
+                        if (
+                             gridWorld.IsDirectionObstructedAt(transform.position, nextDir)
+                         )
                         {
                             var gridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
                             var worldPos = gridWorld.ConvertGridPosToWorldPos(gridPos);
-                            onDragCollided?.Invoke(worldPos + nextDir.normalized);
 
-                            nextDir *= 0f;
+                            var frontPos = worldPos + nextDir.normalized;
+                            var currBlock = PuzzleManager.Instance.CurrentBeingDragged;
+                            var currBlockPuzzleStats = currBlock.GetComponent<PuzzleStats>();
+                            var collidedBlockValue = gridWorld.GetValueAt(frontPos);
+                            if (currBlockPuzzleStats.PuzzleValue == collidedBlockValue)
+                            {
+                                // if (frontPos.Equals(worldPos))
+                                    onDragCollided?.Invoke(frontPos);
+                            }
+                            else
+                                nextPos = transform.position;
                         }
 
-                        transform.position += 100 * Time.deltaTime * (Vector3)nextDir;
+                        transform.position = nextPos;
                     }
                     break;
 
@@ -102,10 +115,6 @@ public class DragAndDrop : MonoBehaviour
 
                         CalculateTargetPosition();
                         onDroppedToFloor?.Invoke(targetPosition);
-                        LeanTween.move(gameObject, targetPosition, .1f).setOnComplete(() =>
-                        {
-                            // something in here
-                        });
                     }
                     break;
             }

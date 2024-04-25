@@ -18,8 +18,9 @@ public class PuzzleManager : MonoBehaviour
 
     [Header("Settings")]
     public int currentPuzzleThemeIndex;
-    // Settting
     public int TotalPuzzleBlockAmount { get; private set; }
+    public bool IsTweening { get; set; }
+    public float TweenSlowFactor;
 
     private void Awake()
     {
@@ -136,8 +137,7 @@ public class PuzzleManager : MonoBehaviour
 
     public bool IsHighestRowHasPuzzle()
     {
-        // we minus 2 since the last row actually doesn't show in the screen
-        var lastRow = ActivePuzzleBlocks.GetLength(1) - 2;
+        var lastRow = ActivePuzzleBlocks.GetLength(1) - 1;
         for (int x = 0; x < ActivePuzzleBlocks.GetLength(0); x += 1)
         {
             var currBlock = ActivePuzzleBlocks[x, lastRow];
@@ -158,7 +158,7 @@ public class PuzzleManager : MonoBehaviour
                 if (currBlock == null) continue;
 
                 var gridPos = new Vector2(x, y);
-                var currWorldPos = GridUtility.ConvertGridPosToWorldPos(gridPos, gridWorld.Offset);
+                var currWorldPos = gridWorld.ConvertGridPosToWorldPos(gridPos);
 
                 var downPos1 = currWorldPos + Vector2.down;
                 // check empty space
@@ -200,9 +200,11 @@ public class PuzzleManager : MonoBehaviour
                 currBlock.GetComponent<PuzzleStats>().PuzzleValue,
                 currBlock
         );
-        LeanTween.move(currBlock, desWorldPos, .07f).setOnComplete(() =>
+        IsTweening = true;
+        LeanTween.move(currBlock, desWorldPos, .07f * TweenSlowFactor).setOnComplete(() =>
         {
             callback?.Invoke();
+            IsTweening = false;
         });
     }
 
@@ -214,11 +216,12 @@ public class PuzzleManager : MonoBehaviour
                 gridWorld.GetValueAt(desWorldPos) + 1,
                 GetPuzzleBlockAt(desWorldPos)
         );
-
-        LeanTween.move(currBlock, desWorldPos, .14f).setOnComplete(() =>
+        IsTweening = true;
+        LeanTween.move(currBlock, desWorldPos, .14f * TweenSlowFactor).setOnComplete(() =>
         {
             currBlock.GetComponent<PuzzleStats>().PoolDestroy();
             callback?.Invoke();
+            IsTweening = false;
         });
     }
 
