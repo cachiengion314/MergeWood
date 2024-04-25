@@ -25,10 +25,12 @@ public class DragAndDrop : MonoBehaviour
 
     [Range(0, 100)]
     [SerializeField] private float moveSpeed;
+    Rigidbody2D _rig;
 
     void Start()
     {
         _collider = GetComponent<Collider2D>();
+        _rig = GetComponent<Rigidbody2D>();
     }
 
     void Update()
@@ -44,6 +46,21 @@ public class DragAndDrop : MonoBehaviour
         if (LevelManager.Instance.GetGameState() != GameState.Gameplay) return;
         if (PuzzleManager.Instance.IsTweening) return;
 
+        if (Input.touchCount <= 0)
+        {
+            _rig.velocity = Vector3.zero;
+            _rig.isKinematic = true;
+            onDragEnd?.Invoke();
+            if (this == PuzzleManager.Instance.CurrentBeingDragged)
+            {
+                IsOnDrag = false;
+                PuzzleManager.Instance.CurrentBeingDragged = null;
+
+                CalculateTargetPosition();
+                onDroppedToFloor?.Invoke(targetPosition);
+            }
+        }
+
         if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
@@ -54,6 +71,7 @@ public class DragAndDrop : MonoBehaviour
                 case TouchPhase.Began:
                     if (_collider == Physics2D.OverlapPoint(touchPos))
                     {
+                        _rig.isKinematic = false;
                         onDragBegan?.Invoke();
                         IsOnDrag = true;
                         PuzzleManager.Instance.CurrentBeingDragged = this;
@@ -67,54 +85,17 @@ public class DragAndDrop : MonoBehaviour
                     if (this == PuzzleManager.Instance.CurrentBeingDragged)
                     {
                         onDragMove?.Invoke();
-                        var nextPos = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
-                        var nextDir = nextPos - (Vector2)transform.position;
+                        var _touchPos = new Vector2(touchPos.x - deltaX, touchPos.y - deltaY);
+                        var nextDir = _touchPos - (Vector2)transform.position;
 
 #if UNITY_EDITOR
                         Utility.DrawRay(transform.position, (Vector3)nextDir, 1);
 #endif
 
-                        if (gridWorld.IsDiagonalDirectionObstructedAt(transform.position, nextDir))
-                        {
-                            nextPos = transform.position;
-                        }
-                        if (gridWorld.IsPosOutsideAt(transform.position))
-                        {
-                            nextPos = transform.position;
-                        }
-                        if (
-                             gridWorld.IsDirectionObstructedAt(transform.position, nextDir)
-                         )
-                        {
-                            var gridPos = gridWorld.ConvertWorldPosToGridPos(transform.position);
-                            var worldPos = gridWorld.ConvertGridPosToWorldPos(gridPos);
+                        // r.AddForce(nextDir.normalized * 45, ForceMode2D.Force);
+                        var nextPos = transform.position + 80 * Time.deltaTime * (Vector3)nextDir;
 
-                            var frontPos = worldPos + nextDir.normalized;
-                            var currBlock = PuzzleManager.Instance.CurrentBeingDragged;
-                            var currBlockPuzzleStats = currBlock.GetComponent<PuzzleStats>();
-                            var collidedBlockValue = gridWorld.GetValueAt(frontPos);
-                            if (currBlockPuzzleStats.PuzzleValue == collidedBlockValue)
-                            {
-                                // if (frontPos.Equals(worldPos))
-                                onDragCollided?.Invoke(frontPos);
-                            }
-                            else
-                                nextPos = transform.position;
-                        }
-
-                        transform.position = nextPos;
-                    }
-                    break;
-
-                case TouchPhase.Ended:
-                    onDragEnd?.Invoke();
-                    if (this == PuzzleManager.Instance.CurrentBeingDragged)
-                    {
-                        IsOnDrag = false;
-                        PuzzleManager.Instance.CurrentBeingDragged = null;
-
-                        CalculateTargetPosition();
-                        onDroppedToFloor?.Invoke(targetPosition);
+                        _rig.MovePosition(nextPos);
                     }
                     break;
             }

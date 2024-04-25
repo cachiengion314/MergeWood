@@ -3,6 +3,20 @@ using UnityEngine;
 
 public class Utility
 {
+    /// <summary>
+    /// EDIT: That's in radians, btw. If you need degrees, multiply by Mathf.Deg2Rad or Mathf.Rad2Deg depending on direction.
+    /// </summary>
+    /// <param name="v"></param>
+    /// <param name="delta"></param>
+    /// <returns></returns>
+    public static Vector2 Rotate(Vector2 v, float delta)
+    {
+        return new Vector2(
+            v.x * Mathf.Cos(delta) - v.y * Mathf.Sin(delta),
+            v.x * Mathf.Sin(delta) + v.y * Mathf.Cos(delta)
+        );
+    }
+
     public static float4 RandomColor(ref Unity.Mathematics.Random random)
     {
         var hue = (random.NextFloat() + 0.618034005f) % 1;

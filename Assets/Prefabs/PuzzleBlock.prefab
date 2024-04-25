@@ -183,6 +183,7 @@ GameObject:
   - component: {fileID: 518938400417997949}
   - component: {fileID: 1272584321781542286}
   - component: {fileID: 2644034698311499243}
+  - component: {fileID: -7423515170853323288}
   m_Layer: 0
   m_Name: PuzzleBlock
   m_TagString: Untagged
@@ -250,7 +251,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.92, y: 0.92}
+  m_Size: {x: 0.7, y: 0.7}
   m_EdgeRadius: 0
 --- !u!114 &1272584321781542286
 MonoBehaviour:
@@ -284,6 +285,33 @@ MonoBehaviour:
   valueText: {fileID: 8136076153811599780}
   dragAndDrop: {fileID: 1272584321781542286}
   LastLandingPos: {x: 0, y: 0}
+--- !u!50 &-7423515170853323288
+Rigidbody2D:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3423673379139951537}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDrag: 0
+  m_AngularDrag: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 4
 --- !u!1 &9141732460598611508
 GameObject:
   m_ObjectHideFlags: 0
